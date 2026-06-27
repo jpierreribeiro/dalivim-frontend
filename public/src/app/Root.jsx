@@ -12,6 +12,34 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "variant": "Linha do tempo"
 }/*EDITMODE-END*/;
 
+// ── Invoice mapping: backend InvoiceResponse → the local list/detail shape ──
+const INVOICE_STATUS_MAP = { draft: 'pendente', sent: 'pendente', paid: 'pago', cancelled: 'cancelada' };
+
+function timeAgoPt(iso) {
+  const then = iso ? new Date(iso).getTime() : 0;
+  if (!then) return 'agora';
+  const s = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (s < 60) return 'agora';
+  const m = Math.floor(s / 60); if (m < 60) return 'há ' + m + ' min';
+  const h = Math.floor(m / 60); if (h < 24) return 'há ' + h + ' h';
+  const d = Math.floor(h / 24); if (d < 30) return 'há ' + d + (d === 1 ? ' dia' : ' dias');
+  const mo = Math.floor(d / 30); return 'há ' + mo + (mo === 1 ? ' mês' : ' meses');
+}
+
+function mapInvoice(resp) {
+  const value = Math.round((resp.amount_cents || 0) / 100);
+  return {
+    id: resp.id,
+    buyer: resp.buyer_name || '', buyerEmail: resp.buyer_email || '',
+    title: resp.title, desc: resp.description || '',
+    value, fee: feeOf(value), total: value + feeOf(value),
+    type: resp.type === 'direct' ? 'direct' : 'escrow',
+    status: INVOICE_STATUS_MAP[resp.status] || 'pendente',
+    when: timeAgoPt(resp.created_at),
+    paymentUrl: resp.payment_url || '',
+  };
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const persona = t.persona === 'vendedor' ? 'vendedor' : 'comprador';
@@ -20,6 +48,22 @@ function App() {
   const [negotiations, setNegotiations] = useState(seedNegotiations);
   const [invoices, setInvoices] = useState(seedInvoices);
   const [route, setRoute] = useState({ view: 'dashboard', id: null });
+
+  // Signed in → replace the demo seed with the seller's real charges
+  // (GET /invoices). Anonymous visitors keep the seed so the prototype still
+  // renders without a login.
+  useEffect(() => {
+    if (!window.DalivimAPI || !DalivimAPI.getToken()) return;
+    let cancelled = false;
+    DalivimAPI.get('/invoices?page=1&page_size=50')
+      .then(res => {
+        if (cancelled) return;
+        const arr = (res && (res.data || res.items)) || [];
+        setInvoices(arr.map(mapInvoice));
+      })
+      .catch(() => { /* keep the demo seed on 401 / network error */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const open = (id) => { setRoute({ view: 'negotiation', id }); window.scrollTo(0, 0); };
   const goNew = () => { setRoute({ view: 'wizard', id: null }); window.scrollTo(0, 0); };
@@ -31,22 +75,9 @@ function App() {
   const goNewInvoice = () => { setRoute({ view: 'invoice-new', id: null }); window.scrollTo(0, 0); };
   const invoiceAction = (id, status) =>
     setInvoices(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-  // Receives the real /invoices response and maps it into the local shape the
-  // list/detail views render. Backend status (draft|sent|paid|cancelled) →
-  // the app's calm vocabulary; payment_url is the actual Pix link to share.
-  const INVOICE_STATUS_MAP = { draft: 'pendente', sent: 'pendente', paid: 'pago', cancelled: 'cancelada' };
+  // Prepend the freshly created charge (mapped from the /invoices response).
   const createInvoice = (resp) => {
-    const value = Math.round((resp.amount_cents || 0) / 100);
-    const inv = {
-      id: resp.id,
-      buyer: resp.buyer_name || '', buyerEmail: resp.buyer_email || '',
-      title: resp.title, desc: resp.description || '',
-      value, fee: feeOf(value), total: value + feeOf(value),
-      type: resp.type === 'direct' ? 'direct' : 'escrow',
-      status: INVOICE_STATUS_MAP[resp.status] || 'pendente',
-      when: 'agora',
-      paymentUrl: resp.payment_url || '',
-    };
+    const inv = mapInvoice(resp);
     setInvoices(prev => [inv, ...prev]);
     setRoute({ view: 'invoice', id: inv.id });
     window.scrollTo(0, 0);
