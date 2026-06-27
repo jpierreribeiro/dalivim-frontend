@@ -44,8 +44,13 @@
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
 
     if (!res.ok) {
-      var err = new Error((data && data.message) || ('HTTP ' + res.status));
+      // Backend error envelope is { error: { code, message } }.
+      var msg = (data && data.error && data.error.message) ||
+                (data && data.message) ||
+                ('HTTP ' + res.status);
+      var err = new Error(msg);
       err.status = res.status;
+      err.code = data && data.error && data.error.code;
       err.data = data;
       throw err;
     }

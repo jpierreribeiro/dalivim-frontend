@@ -348,7 +348,79 @@ function OBStepShell({ step, title, sub, children, onBack, onNext, nextLabel, ca
 }
 
 // ---------- welcome / login ----------
-function OBWelcome({ data, set, onStart }) {
+// Real auth against the backend (window.DalivimAPI → /auth/login,/auth/register).
+// On success the JWT is persisted (DalivimAPI.setToken) and shared across the
+// same-origin bundles, then we hand off to the guided setup / app.
+function OBAuthInput({ type, value, onChange, placeholder, autoComplete, onEnter }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <input
+      type={type} value={value} placeholder={placeholder} autoComplete={autoComplete}
+      onChange={e => onChange(e.target.value)}
+      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+      onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter(); }}
+      style={{
+        width: '100%', padding: '13px 15px', textAlign: 'left',
+        border: '1.5px solid ' + (focus ? '#1E4BA0' : '#E4E4E7'), borderRadius: 12,
+        outline: 'none', background: '#fff', marginBottom: 12,
+        fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: '#0A0A0A',
+        transition: 'border-color 180ms',
+      }}
+    />
+  );
+}
+
+function OBWelcome({ data, set, onStart, onAuthed }) {
+  // view: 'choices' (Google / e-mail) → 'email' (real login/register form)
+  const [view, setView] = useState('choices');
+  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState(data.name || '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [googleNote, setGoogleNote] = useState(false);
+
+  const canSubmit = email.trim().length > 3 && email.includes('@') &&
+    password.length >= (mode === 'register' ? 8 : 1) &&
+    (mode === 'login' || name.trim().length >= 2);
+
+  async function submit() {
+    if (!canSubmit || loading) return;
+    setLoading(true); setError(null);
+    try {
+      let resp;
+      if (mode === 'register') {
+        resp = await DalivimAPI.post('/auth/register', {
+          email: email.trim(), password,
+          full_name: name.trim(),
+          type: 'seller',        // this surface onboards sellers (receive protected Pix)
+          pix_key: email.trim(), // sane default; refined later in "Conecte seu Pix"
+        }, { auth: false });
+      } else {
+        resp = await DalivimAPI.post('/auth/login', {
+          email: email.trim(), password,
+        }, { auth: false });
+      }
+      if (resp && resp.token) DalivimAPI.setToken(resp.token);
+      // Seed the guided-setup data from the account we just got.
+      if (resp && resp.user && resp.user.full_name) set('name', resp.user.full_name);
+      onAuthed(resp, mode);
+    } catch (e) {
+      // 409 on register = e-mail já cadastrado → nudge to login.
+      if (mode === 'register' && e.status === 409) {
+        setError('Esse e-mail já tem conta. Faça login.');
+        setMode('login');
+      } else if (mode === 'login' && e.status === 401) {
+        setError('E-mail ou senha incorretos.');
+      } else {
+        setError(e.message || 'Não foi possível continuar. Tente de novo.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{
       width: '100%', maxWidth: 420,
@@ -357,23 +429,6 @@ function OBWelcome({ data, set, onStart }) {
       boxShadow: '0 1px 2px rgba(10,10,10,0.03), 0 40px 90px -50px rgba(10,10,10,0.3)',
       textAlign: 'center',
     }}>
-      {/* account-type toggle */}
-      <div style={{
-        display: 'inline-flex', padding: 4, background: '#F4F4F5',
-        border: '1px solid #E4E4E7', borderRadius: 9999, marginBottom: 28,
-      }}>
-        {[['pessoa', 'Pessoa'], ['empresa', 'Empresa']].map(([k, label]) => (
-          <button key={k} type="button" onClick={() => set('account', k)} style={{
-            padding: '8px 20px', cursor: 'pointer', border: 'none', borderRadius: 9999,
-            fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 500,
-            background: data.account === k ? '#fff' : 'transparent',
-            color: data.account === k ? '#0A0A0A' : '#71717A',
-            boxShadow: data.account === k ? '0 1px 2px rgba(10,10,10,0.1)' : 'none',
-            transition: 'all 180ms',
-          }}>{label}</button>
-        ))}
-      </div>
-
       <img src="assets/dalivim-mark.svg" alt="" style={{ width: 34, height: 34, margin: '0 auto 18px', display: 'block' }}/>
       <div style={{
         fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: '#1E4BA0',
@@ -383,33 +438,80 @@ function OBWelcome({ data, set, onStart }) {
         fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500,
         fontSize: 'clamp(26px, 3vw, 32px)', letterSpacing: '-0.02em', lineHeight: 1.1,
         margin: '0 0 28px', color: '#0A0A0A',
-      }}>Crie sua conta protegida</h1>
+      }}>{view === 'email' && mode === 'login' ? 'Entrar na sua conta' : 'Crie sua conta protegida'}</h1>
 
-      <button type="button" onClick={onStart} style={{
-        width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 11,
-        fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#0A0A0A',
-        background: '#fff', border: '1.5px solid #E4E4E7', borderRadius: 9999,
-        padding: '14px 20px', cursor: 'pointer', marginBottom: 10, transition: 'border-color 160ms',
-      }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = '#C7C7CE'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = '#E4E4E7'}
-      >
-        <span style={{
-          width: 20, height: 20, borderRadius: 5, background: '#fff', border: '1px solid #E4E4E7',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, color: '#1E4BA0',
-        }}>G</span>
-        Continuar com Google
-      </button>
-      <button type="button" onClick={onStart} style={{
-        width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-        fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#fff',
-        background: '#0A0A0A', border: 'none', borderRadius: 9999,
-        padding: '15px 20px', cursor: 'pointer', transition: 'background 180ms',
-      }}
-      onMouseEnter={e => e.currentTarget.style.background = '#1f1f24'}
-      onMouseLeave={e => e.currentTarget.style.background = '#0A0A0A'}
-      ><Icon name="message" size={15}/>Continuar com e-mail</button>
+      {view === 'choices' ? (
+        <>
+          <button type="button" onClick={() => setGoogleNote(true)} style={{
+            width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 11,
+            fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#0A0A0A',
+            background: '#fff', border: '1.5px solid #E4E4E7', borderRadius: 9999,
+            padding: '14px 20px', cursor: 'pointer', marginBottom: 10, transition: 'border-color 160ms',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#C7C7CE'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = '#E4E4E7'}
+          >
+            <span style={{
+              width: 20, height: 20, borderRadius: 5, background: '#fff', border: '1px solid #E4E4E7',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, color: '#1E4BA0',
+            }}>G</span>
+            Continuar com Google
+          </button>
+          {googleNote && (
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', margin: '0 0 10px' }}>
+              Login com Google em breve — use seu e-mail por enquanto.
+            </div>
+          )}
+          <button type="button" onClick={() => { setView('email'); setError(null); }} style={{
+            width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+            fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#fff',
+            background: '#0A0A0A', border: 'none', borderRadius: 9999,
+            padding: '15px 20px', cursor: 'pointer', transition: 'background 180ms',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#1f1f24'}
+          onMouseLeave={e => e.currentTarget.style.background = '#0A0A0A'}
+          ><Icon name="message" size={15}/>Continuar com e-mail</button>
+        </>
+      ) : (
+        <div style={{ textAlign: 'left' }}>
+          {mode === 'register' && (
+            <OBAuthInput type="text" value={name} onChange={setName}
+              placeholder="Nome completo" autoComplete="name" onEnter={submit}/>
+          )}
+          <OBAuthInput type="email" value={email} onChange={setEmail}
+            placeholder="seu@email.com" autoComplete="email" onEnter={submit}/>
+          <OBAuthInput type="password" value={password} onChange={setPassword}
+            placeholder={mode === 'register' ? 'Crie uma senha (mín. 8)' : 'Sua senha'}
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'} onEnter={submit}/>
+
+          {error && (
+            <div role="alert" style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#B42318',
+              background: '#FEF3F2', border: '1px solid #FDA29B', borderRadius: 10,
+              padding: '10px 12px', margin: '2px 0 12px',
+            }}>{error}</div>
+          )}
+
+          <button type="button" onClick={submit} disabled={!canSubmit || loading} style={{
+            width: '100%', fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600,
+            color: '#fff', background: (!canSubmit || loading) ? '#9DAFCB' : '#0A0A0A',
+            border: 'none', borderRadius: 9999, padding: '15px 20px',
+            cursor: (!canSubmit || loading) ? 'not-allowed' : 'pointer', transition: 'background 180ms',
+          }}>
+            {loading ? 'Aguarde…' : (mode === 'register' ? 'Criar conta' : 'Entrar')}
+          </button>
+
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button type="button" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null); }} style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#52525B',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+            }}>
+              {mode === 'login' ? 'Não tem conta? Criar agora' : 'Já tem conta? Entrar'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <p style={{
         fontFamily: "'Inter', sans-serif", fontSize: 12, lineHeight: 1.6, color: '#A1A1AA',
@@ -528,7 +630,13 @@ function OnboardingApp() {
 
   let body;
   if (stage === 'welcome') {
-    body = <OBWelcome data={data} set={set} onStart={() => go(1)}/>;
+    body = <OBWelcome data={data} set={set} onStart={() => go(1)}
+      onAuthed={(resp, mode) => {
+        // Returning user → straight to the panel. New account → finish the
+        // guided setup (profile / Pix / first negotiation), then the panel.
+        if (mode === 'login') window.location.href = 'App.html';
+        else go(1);
+      }}/>;
   } else if (stage === 'done') {
     body = <OBDone data={data}/>;
   } else {
