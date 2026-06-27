@@ -77,6 +77,21 @@ function mapTransaction(item) {
   };
 }
 
+const MILESTONE_STATUS_MAP = {
+  pending: 'aguardando', funded: 'aguardando',
+  delivered: 'entregue',
+  approved: 'aprovado', payout_pending: 'aprovado', released: 'aprovado',
+  disputed: 'disputa', refunded: 'disputa',
+};
+function mapMilestone(m) {
+  return {
+    id: m.id,
+    title: m.title,
+    value: Math.round((m.amount_cents || 0) / 100),
+    status: MILESTONE_STATUS_MAP[m.status] || 'aguardando',
+  };
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const persona = t.persona === 'vendedor' ? 'vendedor' : 'comprador';
@@ -114,7 +129,32 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  const open = (id) => { setRoute({ view: 'negotiation', id }); window.scrollTo(0, 0); };
+  // Enrich a real negotiation with its full detail (GET /transactions/:id):
+  // fresh status, scope as description, buyer, amounts and milestones. Demo
+  // (non-UUID) ids and anonymous visitors are left untouched.
+  const enrichNegotiation = (id) => {
+    if (!window.DalivimAPI || !DalivimAPI.getToken()) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}/i.test(String(id))) return;
+    DalivimAPI.get('/transactions/' + id)
+      .then(d => {
+        if (!d) return;
+        const value = Math.round((d.amount_cents || 0) / 100);
+        setNegotiations(prev => prev.map(n => {
+          if (n.id !== id) return n;
+          const next = { ...n, value, fee: feeOf(value), total: value + feeOf(value) };
+          if (d.buyer_email) next.counterpart = d.buyer_email;
+          next.status = d.has_dispute ? 'disputa' : (TX_STATUS_MAP[d.status] || n.status);
+          if (d.scope_of_work) next.desc = d.scope_of_work;
+          if (d.has_milestones && Array.isArray(d.milestones) && d.milestones.length) {
+            next.milestones = d.milestones.map(mapMilestone);
+          }
+          return next;
+        }));
+      })
+      .catch(() => { /* keep the list-level data on 404 / network error */ });
+  };
+
+  const open = (id) => { setRoute({ view: 'negotiation', id }); window.scrollTo(0, 0); enrichNegotiation(id); };
   const goNew = () => { setRoute({ view: 'wizard', id: null }); window.scrollTo(0, 0); };
   const goHome = () => { setRoute({ view: 'dashboard', id: null }); window.scrollTo(0, 0); };
 
