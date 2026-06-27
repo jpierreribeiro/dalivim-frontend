@@ -96,6 +96,27 @@ function SummaryChip({ label, value, tone }) {
 function InvoiceDetail({ inv, onBack, onAction }) {
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(null); // 'release' | 'cancel'
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
+
+  // Cancel on the backend (POST /invoices/:id/cancel). Seeded demo invoices
+  // have non-UUID ids and no server row, so those stay local-only.
+  async function doCancel() {
+    if (cancelling) return;
+    setCancelling(true); setCancelError(null);
+    const isReal = /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(String(inv.id));
+    try {
+      if (isReal) await DalivimAPI.post('/invoices/' + inv.id + '/cancel');
+      onAction(inv.id, 'cancelada');
+      setConfirming(null);
+    } catch (e) {
+      if (e.status === 401) setCancelError('Sua sessão expirou. Entre novamente.');
+      else if (e.status === 422) setCancelError(e.message || 'Esta cobrança não pode mais ser cancelada.');
+      else setCancelError(e.message || 'Não foi possível cancelar. Tente de novo.');
+      setCancelling(false);
+    }
+  }
+
   const meta = INVOICE_STATUS[inv.status];
   const t = TONES[meta.tone];
   const isEscrow = inv.type === 'escrow';
@@ -234,8 +255,15 @@ function InvoiceDetail({ inv, onBack, onAction }) {
           <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, lineHeight: 1.5, color: '#52525B', margin: '0 0 18px' }}>
             O link de pagamento para de funcionar e o cliente não poderá mais pagar.
           </p>
+          {cancelError && (
+            <div role="alert" style={{
+              fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#B42318',
+              background: '#FEF3F2', border: '1px solid #FDA29B', borderRadius: 10,
+              padding: '10px 12px', margin: '0 0 14px', lineHeight: 1.45,
+            }}>{cancelError}</div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <PrimaryButton full tone="danger" onClick={() => { onAction(inv.id, 'cancelada'); setConfirming(null); }}>Cancelar cobrança</PrimaryButton>
+            <PrimaryButton full tone="danger" disabled={cancelling} onClick={doCancel}>{cancelling ? 'Cancelando…' : 'Cancelar cobrança'}</PrimaryButton>
             <GhostButton full onClick={() => setConfirming(null)}>Voltar</GhostButton>
           </div>
         </Overlay>
