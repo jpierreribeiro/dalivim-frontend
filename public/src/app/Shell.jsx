@@ -2,7 +2,7 @@
 // and by the standalone Disputa / Fases pages. Exported to window so each
 // page script can mount it.
 
-function TopBar({ persona, setPersona, onHome, homeHref }) {
+function TopBar({ persona, setPersona, onHome, homeHref, onSettings }) {
   const Logo = (
     <span style={{
       width: 28, height: 28, borderRadius: 8, background: '#0A0A0A', color: '#fff',
@@ -42,11 +42,14 @@ function TopBar({ persona, setPersona, onHome, homeHref }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <PersonaSwitch persona={persona} setPersona={setPersona}/>
-          <span style={{
-            width: 32, height: 32, borderRadius: 9999, background: '#1E4BA0', color: '#fff',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500,
-          }}>J</span>
+          <button type="button" onClick={onSettings} aria-label="Configurações" title="Configurações"
+            disabled={!onSettings}
+            style={{
+              all: 'unset', cursor: onSettings ? 'pointer' : 'default',
+              width: 32, height: 32, borderRadius: 9999, background: '#1E4BA0', color: '#fff',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500,
+            }}>J</button>
         </div>
       </div>
     </header>

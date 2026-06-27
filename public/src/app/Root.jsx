@@ -159,6 +159,7 @@ function App() {
   const goHome = () => { setRoute({ view: 'dashboard', id: null }); window.scrollTo(0, 0); };
 
   // ── Invoice (cobrança) handlers ───────────────────────────────────
+  const goSettings = () => { setRoute({ view: 'settings', id: null }); window.scrollTo(0, 0); };
   const goInvoices = () => { setRoute({ view: 'invoices', id: null }); window.scrollTo(0, 0); };
   const openInvoice = (id) => { setRoute({ view: 'invoice', id }); window.scrollTo(0, 0); };
   const goNewInvoice = () => { setRoute({ view: 'invoice-new', id: null }); window.scrollTo(0, 0); };
@@ -242,7 +243,7 @@ function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA' }}>
-      <TopBar persona={persona} setPersona={p => setTweak('persona', p)} onHome={onHome}/>
+      <TopBar persona={persona} setPersona={p => setTweak('persona', p)} onHome={onHome} onSettings={goSettings}/>
 
       <main style={{ maxWidth: 720, margin: '0 auto', padding: '38px 22px 120px' }}>
         {(route.view === 'dashboard' || route.view === 'invoices') && (
@@ -250,6 +251,9 @@ function App() {
         )}
         {route.view === 'dashboard' && (
           <Dashboard negotiations={negotiations} persona={persona} onOpen={open} onNew={goNew}/>
+        )}
+        {route.view === 'settings' && (
+          <SettingsPage onBack={onHome}/>
         )}
         {route.view === 'invoices' && (
           <InvoiceList invoices={invoices} onOpen={openInvoice} onNew={goNewInvoice}/>
