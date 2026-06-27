@@ -149,6 +149,151 @@ function OBConnectRow({ icon, name, sub, connected, onToggle }) {
   );
 }
 
+// ---------- step 3: real KYC + Pix wiring ----------
+// CPF → POST /me/kyc/basic (parks the seller at "pending_basic"; a Dalivim
+// admin approves before charges unlock). Pix key → PATCH /seller/pix-key.
+function obDigits(s) { return (s || '').replace(/\D/g, ''); }
+function obMaskCPF(s) {
+  const d = obDigits(s).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+}
+
+function OBStatusPill({ tone, children }) {
+  const c = tone === 'ok'
+    ? { fg: '#1E8A5A', bg: '#F4FBF7', bd: 'rgba(30,138,90,0.3)' }
+    : tone === 'pending'
+    ? { fg: '#9A6700', bg: '#FFF8E6', bd: 'rgba(154,103,0,0.25)' }
+    : { fg: '#B42318', bg: '#FEF3F2', bd: '#FDA29B' };
+  return (
+    <div role="status" style={{
+      fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 500, color: c.fg,
+      background: c.bg, border: '1px solid ' + c.bd, borderRadius: 10,
+      padding: '9px 12px', margin: '2px 0 10px', lineHeight: 1.4,
+    }}>{children}</div>
+  );
+}
+
+function OBSmallButton({ disabled, onClick, children }) {
+  return (
+    <button type="button" disabled={disabled} onClick={onClick} style={{
+      width: '100%', fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600,
+      color: '#fff', background: disabled ? '#9DAFCB' : '#0A0A0A', border: 'none',
+      borderRadius: 10, padding: '12px 16px', cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'background 160ms',
+    }}>{children}</button>
+  );
+}
+
+function OBPixStep({ data, set }) {
+  const [cpf, setCpf] = useState('');
+  const [dob, setDob] = useState('');
+  const [kyc, setKyc] = useState({
+    state: data.kycSubmitted ? 'done' : 'idle',
+    tone: 'pending',
+    msg: data.kycSubmitted ? 'Identidade enviada — em análise pela Dalivim.' : null,
+  });
+  const [pixKey, setPixKey] = useState(data.pixKey || data.email || '');
+  const [pix, setPix] = useState({
+    state: data.pixConnected ? 'done' : 'idle',
+    msg: data.pixConnected ? 'Chave Pix salva.' : null,
+  });
+
+  const cpfValid = obDigits(cpf).length === 11;
+  const dobValid = /^\d{4}-\d{2}-\d{2}$/.test(dob);
+
+  async function submitKyc() {
+    if (kyc.state === 'loading') return;
+    setKyc({ state: 'loading', tone: 'pending', msg: null });
+    try {
+      await DalivimAPI.post('/me/kyc/basic', {
+        full_name: (data.name || '').trim(),
+        cpf: obDigits(cpf),
+        date_of_birth: dob,
+      });
+      set('kycSubmitted', true);
+      setKyc({ state: 'done', tone: 'pending', msg: 'Identidade enviada — em análise pela Dalivim.' });
+    } catch (e) {
+      if (e.status === 409 && e.code === 'KYC_ALREADY_VERIFIED') {
+        set('kycSubmitted', true); setKyc({ state: 'done', tone: 'ok', msg: 'Identidade já verificada.' });
+      } else if (e.status === 409) {
+        set('kycSubmitted', true); setKyc({ state: 'done', tone: 'pending', msg: 'Verificação já enviada — em análise.' });
+      } else if (e.status === 401) {
+        setKyc({ state: 'error', tone: 'error', msg: 'Sua sessão expirou. Volte e entre novamente.' });
+      } else {
+        setKyc({ state: 'error', tone: 'error', msg: e.message || 'CPF ou data inválidos. Confira e tente de novo.' });
+      }
+    }
+  }
+
+  async function submitPix() {
+    if (pix.state === 'loading') return;
+    setPix({ state: 'loading', msg: null });
+    try {
+      await DalivimAPI.patch('/seller/pix-key', { pix_key: pixKey.trim() });
+      set('pixConnected', true); set('pixKey', pixKey.trim());
+      setPix({ state: 'done', msg: 'Chave Pix salva.' });
+    } catch (e) {
+      if (e.status === 401) setPix({ state: 'error', msg: 'Sua sessão expirou. Volte e entre novamente.' });
+      else setPix({ state: 'error', msg: e.message || 'Chave Pix inválida. Confira e tente de novo.' });
+    }
+  }
+
+  const dateStyle = {
+    width: '100%', padding: '12px 15px', border: '1.5px solid #E4E4E7', borderRadius: 12,
+    outline: 'none', background: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: '#0A0A0A',
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      {/* Identidade (KYC básico) */}
+      <div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: '#0A0A0A', marginBottom: 12 }}>Identidade (CPF)</div>
+        {kyc.state === 'done' ? (
+          <OBStatusPill tone={kyc.tone}>{kyc.msg}</OBStatusPill>
+        ) : (
+          <>
+            <OBField label="CPF">
+              <OBInput value={obMaskCPF(cpf)} onChange={v => setCpf(obDigits(v))} placeholder="000.000.000-00" maxLength={14}/>
+            </OBField>
+            <OBField label="Data de nascimento">
+              <input type="date" value={dob} max="2010-12-31" onChange={e => setDob(e.target.value)} style={dateStyle}/>
+            </OBField>
+            {kyc.msg && <OBStatusPill tone={kyc.tone}>{kyc.msg}</OBStatusPill>}
+            <OBSmallButton disabled={!cpfValid || !dobValid || kyc.state === 'loading'} onClick={submitKyc}>
+              {kyc.state === 'loading' ? 'Enviando…' : 'Enviar para verificação'}
+            </OBSmallButton>
+          </>
+        )}
+      </div>
+
+      {/* Chave Pix */}
+      <div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: '#0A0A0A', marginBottom: 12 }}>Chave Pix · para receber</div>
+        {pix.state === 'done' ? (
+          <OBStatusPill tone="ok">{pix.msg}</OBStatusPill>
+        ) : (
+          <>
+            <OBField label="Chave Pix" hint="· CPF, e-mail, telefone ou aleatória">
+              <OBInput value={pixKey} onChange={setPixKey} placeholder="sua chave Pix" maxLength={100}/>
+            </OBField>
+            {pix.msg && <OBStatusPill tone="error">{pix.msg}</OBStatusPill>}
+            <OBSmallButton disabled={pixKey.trim().length < 1 || pix.state === 'loading'} onClick={submitPix}>
+              {pix.state === 'loading' ? 'Salvando…' : 'Salvar chave Pix'}
+            </OBSmallButton>
+          </>
+        )}
+      </div>
+
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', margin: 0, lineHeight: 1.5 }}>
+        A identidade é analisada pela Dalivim antes de liberar cobranças. Os valores ficam em conta segregada, separada da operação da Dalivim.
+      </p>
+    </div>
+  );
+}
+
 // ---------- live preview panel ----------
 const USE_LABELS = { comprar: 'Comprar', vender: 'Vender', servicos: 'Serviços', ambos: 'Comprar e vender' };
 const TX_LABELS = { produto: 'Produto', servico: 'Serviço', outro: 'Outro acordo' };
@@ -609,9 +754,10 @@ function OnboardingApp() {
   const [stage, setStage] = useState(saved?.stage ?? 'welcome');
   const [data, setData] = useState(saved?.data ?? {
     account: 'pessoa',
-    name: '', username: '', phone: '',
+    name: '', email: '', username: '', phone: '',
     use: '', source: '',
     pixConnected: false, bankConnected: false, idVerified: false,
+    kycSubmitted: false, pixKey: '',
     txType: '', value: 1500, order: 'pagamento',
   });
   const set = (k, v) => setData(d => ({ ...d, [k]: v }));
@@ -632,6 +778,7 @@ function OnboardingApp() {
   if (stage === 'welcome') {
     body = <OBWelcome data={data} set={set} onStart={() => go(1)}
       onAuthed={(resp, mode) => {
+        if (resp && resp.user && resp.user.email) set('email', resp.user.email);
         // Returning user → straight to the panel. New account → finish the
         // guided setup (profile / Pix / first negotiation), then the panel.
         if (mode === 'login') window.location.href = 'App.html';
@@ -689,22 +836,10 @@ function OnboardingApp() {
       ),
     });
     else if (step === 3) body = shell({
-      title: 'Conecte seu Pix',
-      sub: 'É por aqui que o dinheiro entra na custódia e é liberado. Nada se move sem confirmação.',
-      canNext: data.pixConnected,
-      children: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <OBConnectRow icon="pix" name="Chave Pix" sub="Para receber valores liberados"
-            connected={data.pixConnected} onToggle={() => set('pixConnected', true)}/>
-          <OBConnectRow icon="banknote" name="Conta bancária" sub="Confirmação de titularidade"
-            connected={data.bankConnected} onToggle={() => set('bankConnected', true)}/>
-          <OBConnectRow icon="user" name="Identidade (CPF)" sub="Verificação para liberar a custódia"
-            connected={data.idVerified} onToggle={() => set('idVerified', true)}/>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', margin: '6px 0 0', lineHeight: 1.5 }}>
-            Os valores ficam em conta segregada, separada da operação da Dalivim.
-          </p>
-        </div>
-      ),
+      title: 'Identidade e Pix',
+      sub: 'Verifique sua identidade e cadastre sua chave Pix. É o que libera o recebimento das suas cobranças.',
+      canNext: data.kycSubmitted && data.pixConnected,
+      children: <OBPixStep data={data} set={set}/>,
     });
     else if (step === 4) body = shell({
       title: 'Crie sua primeira negociação',

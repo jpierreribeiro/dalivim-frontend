@@ -69,10 +69,20 @@ Browser ──> Cloudflare Pages (this app, static)
   It's the seam for replacing the mock data with live API calls, screen by
   screen. The endpoints are documented in the backend's Postman collection.
 
-The bundles currently render with **mock data** (`public/src/app/data.jsx`) —
-this is a high-fidelity prototype. The deployment, configuration, and API
-client are wired up; turning individual screens into live API calls is the
-remaining product work and can be done incrementally via `DalivimAPI`.
+### What's wired to the live backend
+
+- **Login / cadastro** (`Onboarding.jsx`) → `/auth/login`, `/auth/register`
+  (JWT saved via `DalivimAPI.setToken`).
+- **Onboarding · Identidade e Pix** (`Onboarding.jsx`) → `/me/kyc/basic`
+  (basic KYC) and `/seller/pix-key`. Note: KYC is parked as *pending* and
+  requires a Dalivim **admin approval** before charges unlock.
+- **Nova cobrança** (`Invoices.jsx`) → `/invoices` (returns the real Pix
+  `payment_url`, shown/copied in the invoice detail).
+
+Lists and the remaining actions (dashboard data, release/cancel, disputes,
+milestones) still render with **mock data** (`public/src/app/data.jsx`). Turning
+them into live calls is incremental product work via `DalivimAPI`; the endpoints
+are documented in the backend's Postman collection.
 
 ## How it's wired (Next layer)
 
