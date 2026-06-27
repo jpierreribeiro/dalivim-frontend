@@ -51,6 +51,16 @@ const STATUS = {
     tone: 'green',
     money: 'O dinheiro foi devolvido ao cliente.',
   },
+  'cancelado': {
+    label: 'Cancelada',
+    tone: 'gray',
+    money: 'Esta negociação foi cancelada.',
+  },
+  'expirado': {
+    label: 'Expirada',
+    tone: 'gray',
+    money: 'O prazo de pagamento expirou.',
+  },
 };
 
 // ── Dispute model ────────────────────────────────────────────────────

@@ -40,6 +40,43 @@ function mapInvoice(resp) {
   };
 }
 
+// ── Transaction mapping: backend TransactionListItem → local negotiation ──
+const TX_STATUS_MAP = {
+  pending_payment: 'aguardando-pagamento',
+  paid: 'protegido',
+  in_escrow: 'protegido',
+  cancel_requested: 'protegido', // funds still held while cancellation is negotiated
+  released: 'liberado',
+  disputed: 'disputa',
+  refund_pending_external: 'reembolsado',
+  refund_failed_external: 'reembolsado',
+  refunded: 'reembolsado',
+  cancelled: 'cancelado',
+  expired: 'expirado',
+};
+
+function tipoFromProduct(pt) {
+  const s = (pt || '').toLowerCase();
+  if (s.indexOf('serv') >= 0) return 'servico';
+  if (s.indexOf('produt') >= 0 || s.indexOf('product') >= 0) return 'produto';
+  return 'outro';
+}
+
+function mapTransaction(item) {
+  const value = Math.round((item.amount_cents || 0) / 100);
+  const status = item.has_dispute ? 'disputa' : (TX_STATUS_MAP[item.status] || 'protegido');
+  return {
+    id: item.id,
+    title: item.product_type_label || 'Negociação',
+    tipo: tipoFromProduct(item.product_type),
+    value, fee: feeOf(value), total: value + feeOf(value),
+    counterpart: item.buyer_email || '',
+    status,
+    when: timeAgoPt(item.created_at),
+    desc: '',
+  };
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const persona = t.persona === 'vendedor' ? 'vendedor' : 'comprador';
@@ -49,12 +86,23 @@ function App() {
   const [invoices, setInvoices] = useState(seedInvoices);
   const [route, setRoute] = useState({ view: 'dashboard', id: null });
 
-  // Signed in → replace the demo seed with the seller's real charges
-  // (GET /invoices). Anonymous visitors keep the seed so the prototype still
-  // renders without a login.
+  // Signed in → replace the demo seed with the seller's real data:
+  // GET /transactions (negotiations) + GET /invoices (charges). Anonymous
+  // visitors keep the seed so the prototype still renders without a login.
   useEffect(() => {
     if (!window.DalivimAPI || !DalivimAPI.getToken()) return;
     let cancelled = false;
+    // Logged-in user is a seller — show the seller's lens, not the demo buyer one.
+    setTweak('persona', 'vendedor');
+
+    DalivimAPI.get('/transactions?page=1&page_size=50&sort_by=created_at&sort_order=desc')
+      .then(res => {
+        if (cancelled) return;
+        const arr = (res && (res.data || res.items || res.transactions)) || [];
+        setNegotiations(arr.map(mapTransaction));
+      })
+      .catch(() => { /* keep the demo seed on 401 / network error */ });
+
     DalivimAPI.get('/invoices?page=1&page_size=50')
       .then(res => {
         if (cancelled) return;
@@ -62,6 +110,7 @@ function App() {
         setInvoices(arr.map(mapInvoice));
       })
       .catch(() => { /* keep the demo seed on 401 / network error */ });
+
     return () => { cancelled = true; };
   }, []);
 
