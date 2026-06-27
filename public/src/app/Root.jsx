@@ -31,12 +31,21 @@ function App() {
   const goNewInvoice = () => { setRoute({ view: 'invoice-new', id: null }); window.scrollTo(0, 0); };
   const invoiceAction = (id, status) =>
     setInvoices(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-  const createInvoice = (d) => {
+  // Receives the real /invoices response and maps it into the local shape the
+  // list/detail views render. Backend status (draft|sent|paid|cancelled) →
+  // the app's calm vocabulary; payment_url is the actual Pix link to share.
+  const INVOICE_STATUS_MAP = { draft: 'pendente', sent: 'pendente', paid: 'pago', cancelled: 'cancelada' };
+  const createInvoice = (resp) => {
+    const value = Math.round((resp.amount_cents || 0) / 100);
     const inv = {
-      id: 'COB-' + Math.floor(1000 + Math.random() * 8999),
-      buyer: d.buyer, buyerEmail: d.buyerEmail, title: d.title, desc: d.desc,
-      value: d.value, fee: feeOf(d.value), total: d.value + feeOf(d.value),
-      type: d.type, status: 'pendente', when: 'agora',
+      id: resp.id,
+      buyer: resp.buyer_name || '', buyerEmail: resp.buyer_email || '',
+      title: resp.title, desc: resp.description || '',
+      value, fee: feeOf(value), total: value + feeOf(value),
+      type: resp.type === 'direct' ? 'direct' : 'escrow',
+      status: INVOICE_STATUS_MAP[resp.status] || 'pendente',
+      when: 'agora',
+      paymentUrl: resp.payment_url || '',
     };
     setInvoices(prev => [inv, ...prev]);
     setRoute({ view: 'invoice', id: inv.id });

@@ -99,7 +99,9 @@ function InvoiceDetail({ inv, onBack, onAction }) {
   const meta = INVOICE_STATUS[inv.status];
   const t = TONES[meta.tone];
   const isEscrow = inv.type === 'escrow';
-  const link = `dalivim.com/c/${inv.id.toLowerCase().replace('-', '')}`;
+  // Real Pix payment link from the backend (payment_url); fall back to a
+  // display-only slug for the seeded demo invoices that have none.
+  const link = inv.paymentUrl || `dalivim.com/c/${String(inv.id).toLowerCase().replace('-', '')}`;
 
   // Seller's next action for this invoice
   const head = inv.status === 'pendente'
@@ -256,6 +258,35 @@ function NewInvoice({ onCancel, onCreate }) {
   const [step, setStep] = useState(0);
   const [d, setD] = useState({ buyer: '', buyerEmail: '', title: '', desc: '', value: 0, type: 'escrow' });
   const set = (k, v) => setD(p => ({ ...p, [k]: v }));
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Create the charge on the backend (POST /invoices). The buyer gets a real
+  // Pix payment link by e-mail; the response carries its payment_url. Requires
+  // an authenticated, KYC-verified seller.
+  async function submit() {
+    if (submitting) return;
+    setSubmitting(true); setError(null);
+    try {
+      const idem = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : ('idem-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+      const resp = await DalivimAPI.post('/invoices', {
+        buyer_email: d.buyerEmail.trim(),
+        buyer_name: d.buyer.trim(),
+        title: d.title.trim(),
+        description: d.desc.trim(),
+        amount_cents: Math.round(d.value * 100),
+        type: d.type,
+      }, { headers: { 'Idempotency-Key': idem } });
+      onCreate(resp); // Root maps the response and routes to the detail view
+    } catch (e) {
+      if (e.status === 401) setError('Sua sessão expirou. Entre novamente para enviar cobranças.');
+      else if (e.status === 403 || e.code === 'KYC_REQUIRED') setError('Conclua a verificação de identidade (KYC) para emitir cobranças.');
+      else setError(e.message || 'Não foi possível enviar a cobrança. Tente de novo.');
+      setSubmitting(false);
+    }
+  }
 
   const STEPS = [
     { q: 'Para quem é a cobrança?' },
@@ -372,9 +403,16 @@ function NewInvoice({ onCancel, onCreate }) {
         )}
       </div>
 
-      <div className="dv-desktop-action" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 30 }}>
+      {error && (
+        <div role="alert" style={{
+          marginTop: 22, fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#B42318',
+          background: '#FEF3F2', border: '1px solid #FDA29B', borderRadius: 12, padding: '12px 14px', lineHeight: 1.45,
+        }}>{error}</div>
+      )}
+
+      <div className="dv-desktop-action" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: error ? 14 : 30 }}>
         {isReview
-          ? <PrimaryButton key="inv-create" full onClick={() => onCreate(d)}>Enviar cobrança</PrimaryButton>
+          ? <PrimaryButton key="inv-create" full disabled={submitting} onClick={submit}>{submitting ? 'Enviando…' : 'Enviar cobrança'}</PrimaryButton>
           : <PrimaryButton key="inv-next" full disabled={!canNext} onClick={next}>Continuar</PrimaryButton>}
         <GhostButton full onClick={back}>
           <Icon name="arrow-left" size={15}/> {step === 0 ? 'Cancelar' : 'Voltar'}
@@ -382,7 +420,7 @@ function NewInvoice({ onCancel, onCreate }) {
       </div>
       <MobileBar>
         {isReview
-          ? <PrimaryButton key="inv-create-m" full onClick={() => onCreate(d)}>Enviar cobrança</PrimaryButton>
+          ? <PrimaryButton key="inv-create-m" full disabled={submitting} onClick={submit}>{submitting ? 'Enviando…' : 'Enviar cobrança'}</PrimaryButton>
           : <PrimaryButton key="inv-next-m" full disabled={!canNext} onClick={next}>Continuar</PrimaryButton>}
         <GhostButton full onClick={back}>
           <Icon name="arrow-left" size={15}/> {step === 0 ? 'Cancelar' : 'Voltar'}
