@@ -26,32 +26,33 @@ Railway backend). That's how the bundles learn where the backend is.
 | `/disputa`     | Dispute (mediation) flow                              |
 | `/fases`       | Milestone (phased payment) flow                       |
 
-## Deploy on Cloudflare Pages
+## Deploy on Cloudflare
 
-This project builds to a fully static site (`output: 'export'` →`out/`), so
-Cloudflare Pages serves it with no server runtime.
+This project builds to a fully static site (`output: 'export'` → `out/`) and is
+deployed as a **static-assets Worker** (no server runtime): `wrangler deploy`
+uploads `out/` per `wrangler.toml` (`[assets] directory = "./out"`).
 
-**Option A — connect the repo (recommended).** In the Cloudflare dashboard,
-create a Pages project from this GitHub repo with:
+**Connect the repo (recommended).** In the Cloudflare dashboard (Workers &
+Pages → connect this GitHub repo), the build runs:
 
-| Setting            | Value                          |
-|--------------------|--------------------------------|
-| Framework preset   | Next.js (Static HTML Export)   |
-| Build command      | `npm run build`                |
-| Build output dir   | `out`                          |
+| Step           | Command / value   |
+|----------------|-------------------|
+| Build command  | `npm run build`   |
+| Deploy command | `npx wrangler deploy` (default) |
 
-Then add an environment variable:
+Add an environment variable for the build:
 
 | Variable                   | Value                                               |
 |----------------------------|-----------------------------------------------------|
 | `NEXT_PUBLIC_API_BASE_URL` | `https://dalivim-escrow-production.up.railway.app`  |
 
-**Option B — direct upload.** `npm run pages:deploy` builds and pushes `out/`
-via Wrangler (uses `wrangler.toml`).
+**Direct upload from your machine.** `npm run deploy` builds and runs
+`wrangler deploy`.
 
-> After the first deploy you get a `https://<project>.pages.dev` URL (or your
-> custom domain). Add that exact origin to the backend's `CORS_ALLOWED_ORIGINS`
-> in Railway so browser calls from the frontend are allowed.
+> After the first deploy you get a `https://<worker>.workers.dev` URL (or your
+> custom domain). Add that **exact** origin to the backend's
+> `CORS_ALLOWED_ORIGINS` in Railway — the login/invoice calls are cross-origin,
+> so without it the browser blocks them at preflight.
 
 ## How it connects to the backend
 
