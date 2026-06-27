@@ -148,7 +148,7 @@ function HeroWithMicro({ variant = 'v1', tweaks = {} }) {
           </p>
 
           <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', marginTop: 34 }}>
-            <a href="Onboarding.html" style={{
+            <a href="Onboarding.html?signup=1" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 16,
               background: '#0A0A0A', color: '#fff',
@@ -590,7 +590,7 @@ function MicroExperienceControlled({ step, setStep, tipo, setTipo, value, setVal
               <FlowDiagram value={value} order={acordo} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <a href="Onboarding.html"
+              <a href="Onboarding.html?signup=1"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 15,

@@ -360,7 +360,7 @@ function FinalScreen({ value, tipo, acordo, onReset, onCta }) {
       {/* CTAs */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <a
-          href="Onboarding.html"
+          href="Onboarding.html?signup=1"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 16,

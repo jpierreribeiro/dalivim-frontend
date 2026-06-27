@@ -515,10 +515,11 @@ function OBAuthInput({ type, value, onChange, placeholder, autoComplete, onEnter
   );
 }
 
-function OBWelcome({ data, set, onStart, onAuthed }) {
-  // view: 'choices' (Google / e-mail) → 'email' (real login/register form)
-  const [view, setView] = useState('choices');
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
+  // view: 'choices' (Google / e-mail) → 'email' (real login/register form).
+  // Landing deep-links set these: ?signup=1 → create-account, ?login=1 → login.
+  const [view, setView] = useState(initialView || 'choices');
+  const [mode, setMode] = useState(initialMode || 'login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState(data.name || '');
@@ -775,8 +776,21 @@ function OnboardingApp() {
   ];
 
   let body;
+  // Landing CTAs deep-link the auth screen: "Criar transação" → ?signup=1
+  // (create-account form), "Entrar" → ?login=1 (login form). Default: the
+  // choices screen, with the e-mail path defaulting to create-account.
+  const authIntent = (() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.has('login')) return { view: 'email', mode: 'login' };
+      if (p.has('signup')) return { view: 'email', mode: 'register' };
+    } catch (e) {}
+    return { view: 'choices', mode: 'register' };
+  })();
+
   if (stage === 'welcome') {
     body = <OBWelcome data={data} set={set} onStart={() => go(1)}
+      initialView={authIntent.view} initialMode={authIntent.mode}
       onAuthed={(resp, mode) => {
         if (resp && resp.user && resp.user.email) set('email', resp.user.email);
         // Returning user → straight to the panel. New account → finish the

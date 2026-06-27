@@ -85,7 +85,7 @@ function Header() {
 
         {/* Actions */}
         <div className="dv-lp-topcta" style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <a href="Onboarding.html" style={{
+          <a href="Onboarding.html?login=1" style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 13.5,
               color: '#0A0A0A', textDecoration: 'none', borderRadius: 9999,
@@ -96,7 +96,7 @@ function Header() {
             }}>
             Entrar
           </a>
-          <a href="Onboarding.html" style={{ borderRadius: 9999, boxShadow: scrolled ? floatShadow : 'none', transition: 'box-shadow 320ms' }}>
+          <a href="Onboarding.html?signup=1" style={{ borderRadius: 9999, boxShadow: scrolled ? floatShadow : 'none', transition: 'box-shadow 320ms' }}>
             <Button variant="primary" style={{ padding: '11px 18px', fontSize: 13.5 }}>
               Criar transação
             </Button>
@@ -114,7 +114,7 @@ function Header() {
         WebkitBackdropFilter: 'saturate(180%) blur(16px)',
         borderTop: '1px solid #E4E4E7'
       }}>
-      <a href="Onboarding.html" style={{ display: 'block', textDecoration: 'none' }}>
+      <a href="Onboarding.html?signup=1" style={{ display: 'block', textDecoration: 'none' }}>
         <Button variant="primary" style={{ width: '100%', padding: '16px', fontSize: 15.5 }}>
           Criar transação protegida
         </Button>
@@ -169,7 +169,7 @@ function Faq() {
               Regras simples, sem letra miúda. Se algo parecer escondido, é porque não existe.
             </p>
 
-            <a href="Onboarding.html" style={{
+            <a href="Onboarding.html?signup=1" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 15,
               background: '#1E4BA0', color: '#fff',
@@ -306,7 +306,7 @@ function FinalCta() {
         }}>
           Sem cadastro complicado, sem mensalidade. Você só paga quando o dinheiro é liberado.
         </p>
-        <a href="Onboarding.html" style={{ display: 'inline-block', textDecoration: 'none' }}>
+        <a href="Onboarding.html?signup=1" style={{ display: 'inline-block', textDecoration: 'none' }}>
           <Button variant="primary" style={{ padding: '18px 32px', fontSize: 16 }}>
             Criar transação grátis
           </Button>
