@@ -55,6 +55,41 @@ function SaveNote({ state }) {
   );
 }
 
+function Toggle({ checked, onChange, label, sub, first }) {
+  return (
+    <div onClick={() => onChange(!checked)} style={{
+      display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', cursor: 'pointer',
+      borderTop: first ? 'none' : '1px solid #F4F4F5',
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: '#0A0A0A' }}>{label}</div>
+        {sub && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', marginTop: 1 }}>{sub}</div>}
+      </div>
+      <span aria-hidden style={{
+        width: 40, height: 24, borderRadius: 9999, flexShrink: 0, position: 'relative',
+        background: checked ? '#1E4BA0' : '#D4D4D8', transition: 'background 160ms',
+      }}>
+        <span style={{
+          position: 'absolute', top: 3, left: checked ? 19 : 3, width: 18, height: 18, borderRadius: 9999,
+          background: '#fff', transition: 'left 160ms', boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+        }}/>
+      </span>
+    </div>
+  );
+}
+
+// Event toggles shown in the Notificações card (key matches the API field).
+const NOTIF_EVENTS = [
+  ['notify_payment_confirmed', 'Pagamento confirmado'],
+  ['notify_dispute_opened', 'Disputa aberta'],
+  ['notify_dispute_updated', 'Disputa atualizada'],
+  ['notify_milestone_delivered', 'Fase entregue'],
+  ['notify_milestone_approved', 'Fase aprovada'],
+  ['notify_payout_failed', 'Falha no repasse'],
+  ['notify_link_expiring', 'Link de pagamento expirando'],
+  ['notify_webhook_delivery_failed', 'Falha de webhook'],
+];
+
 function SettingsPage({ onBack }) {
   const authed = !!(window.DalivimAPI && DalivimAPI.getToken());
   const [loading, setLoading] = useState(authed);
@@ -63,8 +98,15 @@ function SettingsPage({ onBack }) {
     public_description: '', trust_blurb: '',
   });
   const [settings, setSettings] = useState({ default_expiration_hours: 24, default_checkout_behavior: 'standard' });
+  const [notifs, setNotifs] = useState({
+    email_enabled: true,
+    notify_payment_confirmed: true, notify_dispute_opened: true, notify_dispute_updated: true,
+    notify_milestone_delivered: true, notify_milestone_approved: true, notify_payout_failed: true,
+    notify_link_expiring: true, notify_webhook_delivery_failed: true,
+  });
   const [pState, setPState] = useState({ saving: false, msg: null, tone: 'ok' });
   const [sState, setSState] = useState({ saving: false, msg: null, tone: 'ok' });
+  const [nState, setNState] = useState({ saving: false, msg: null, tone: 'ok' });
 
   useEffect(() => {
     if (!authed) return;
@@ -72,7 +114,8 @@ function SettingsPage({ onBack }) {
     Promise.all([
       DalivimAPI.get('/seller/profile').catch(() => null),
       DalivimAPI.get('/seller/settings').catch(() => null),
-    ]).then(([p, s]) => {
+      DalivimAPI.get('/seller/notification-preferences').catch(() => null),
+    ]).then(([p, s, n]) => {
       if (cancelled) return;
       if (p) setProfile({
         display_name: p.DisplayName ?? p.display_name ?? '',
@@ -84,6 +127,11 @@ function SettingsPage({ onBack }) {
       if (s) setSettings({
         default_expiration_hours: s.DefaultExpirationHours ?? s.default_expiration_hours ?? 24,
         default_checkout_behavior: s.DefaultCheckoutBehavior ?? s.default_checkout_behavior ?? 'standard',
+      });
+      if (n) setNotifs(prev => {
+        const next = { ...prev };
+        for (const k of Object.keys(prev)) if (typeof n[k] === 'boolean') next[k] = n[k];
+        return next;
       });
       setLoading(false);
     });
@@ -121,6 +169,19 @@ function SettingsPage({ onBack }) {
       setSState({ saving: false, msg: 'Preferências salvas.', tone: 'ok' });
     } catch (e) {
       setSState({ saving: false, tone: 'err', msg: e.status === 401 ? 'Sua sessão expirou. Entre novamente.' : (e.message || 'Não foi possível salvar as preferências.') });
+    }
+  }
+
+  const setN = (k, v) => setNotifs(d => ({ ...d, [k]: v }));
+
+  async function saveNotifs() {
+    if (nState.saving) return;
+    setNState({ saving: true, msg: null, tone: 'ok' });
+    try {
+      await DalivimAPI.patch('/seller/notification-preferences', notifs);
+      setNState({ saving: false, msg: 'Notificações salvas.', tone: 'ok' });
+    } catch (e) {
+      setNState({ saving: false, tone: 'err', msg: e.status === 401 ? 'Sua sessão expirou. Entre novamente.' : (e.message || 'Não foi possível salvar as notificações.') });
     }
   }
 
@@ -187,6 +248,22 @@ function SettingsPage({ onBack }) {
             </label>
             <SaveNote state={sState}/>
             <PrimaryButton onClick={saveSettings} disabled={sState.saving}>{sState.saving ? 'Salvando…' : 'Salvar preferências'}</PrimaryButton>
+          </Card>
+
+          {/* Notifications */}
+          <Card pad={22} style={{ marginTop: 18 }}>
+            <Eyebrow style={{ marginBottom: 6 }}>Notificações por e-mail</Eyebrow>
+            <Toggle first label="Receber e-mails" sub="Desligar pausa todos os avisos abaixo."
+              checked={notifs.email_enabled} onChange={v => setN('email_enabled', v)}/>
+            <div style={{ opacity: notifs.email_enabled ? 1 : 0.45, pointerEvents: notifs.email_enabled ? 'auto' : 'none', marginTop: 4 }}>
+              {NOTIF_EVENTS.map(([k, label]) => (
+                <Toggle key={k} label={label} checked={!!notifs[k]} onChange={v => setN(k, v)}/>
+              ))}
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <SaveNote state={nState}/>
+              <PrimaryButton onClick={saveNotifs} disabled={nState.saving}>{nState.saving ? 'Salvando…' : 'Salvar notificações'}</PrimaryButton>
+            </div>
           </Card>
         </>
       )}
