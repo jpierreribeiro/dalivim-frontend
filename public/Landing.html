@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>Dalivim — Medo de não receber? A gente garante.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="assets/dalivim-mark.svg"/>
+<link rel="stylesheet" href="assets/colors_and_type.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #fff; color: #0A0A0A; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  *, *::before, *::after { box-sizing: border-box; }
+  a { color: inherit; }
+  button:focus-visible, input:focus-visible, a:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px rgba(30,75,160,0.25);
+  }
+  @keyframes dv-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dv-caret {
+    0%, 50%  { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+  @keyframes dv-cta-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(30,75,160,0.45); }
+    70%  { box-shadow: 0 0 0 14px rgba(30,75,160,0); }
+    100% { box-shadow: 0 0 0 0 rgba(30,75,160,0); }
+  }
+  /* Custom range slider thumb */
+  input[type=range].dv-range { -webkit-appearance: none; appearance: none; outline: none; }
+  input[type=range].dv-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 9999px;
+    background: #fff; border: 2px solid #1E4BA0;
+    cursor: grab; margin-top: -9px;
+    transition: transform 160ms cubic-bezier(0.2,0.6,0.2,1), box-shadow 160ms;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  input[type=range].dv-range::-webkit-slider-thumb:hover { transform: scale(1.1); }
+  input[type=range].dv-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(0.95); }
+  input[type=range].dv-range::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 9999px;
+    background: #fff; border: 2px solid #1E4BA0;
+    cursor: grab;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  /* (variation picker replaced by Tweaks panel) */
+  @keyframes dv-step-in {
+    from { opacity: 0; transform: translate3d(14px, 0, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes dv-pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(22,121,76,0.18); }
+    50%      { box-shadow: 0 0 0 6px rgba(22,121,76,0.05); }
+  }
+
+  /* ── Mobile responsiveness ─────────────────────────── */
+  .dv-lp-mobilebar { display: none; }
+  @media (max-width: 760px) {
+    /* Top nav + top CTA give way to a bottom-anchored primary action */
+    .dv-lp-nav { display: none !important; }
+    .dv-lp-topcta { display: none !important; }
+    .dv-lp-mobilebar { display: block !important; }
+    #root { padding-bottom: 84px; }
+  }
+  @media (max-width: 900px) {
+    /* Header: hide nav pills, shrink spacing */
+    header nav { display: none !important; }
+    header > div > div:first-child + nav + div a:first-child { display: none !important; }
+  }
+  @media (max-width: 720px) {
+    /* Tighten containers */
+    .dv-container { padding: 0 18px !important; }
+
+    /* Hero paddings */
+    section[id] { padding-top: 80px !important; padding-bottom: 80px !important; }
+
+    /* Faq two-col grid collapses */
+    .dv-faq-grid { grid-template-columns: 1fr !important; gap: 20px !important; margin-bottom: 40px !important; }
+    .dv-faq-grid h2 { font-size: clamp(28px, 8vw, 40px) !important; }
+    .dv-faq-rail { position: static !important; margin-bottom: 12px; }
+
+    /* Categorias: 3 cols → 2 on tablet */
+    .dv-cat-grid { grid-template-columns: 1fr 1fr !important; }
+
+    /* Scenarios: 2 cols on tablet, 1 on phone */
+    .dv-scenarios-grid { grid-template-columns: 1fr 1fr !important; }
+    .dv-uses-grid { grid-template-columns: 1fr !important; }
+    .dv-contrast-grid { grid-template-columns: 1fr !important; }
+
+    /* Trust strip below card — vertical */
+    .dv-trust-strip { gap: 10px !important; flex-direction: column !important; align-items: flex-start !important; padding: 0 16px; }
+
+    /* Footer stack */
+    .dv-footer-row { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; text-align: left !important; }
+  }
+  /* Integra mind-map: swap desktop diagram for stacked layout */
+  .dv-mindmap-mobile { display: none; }
+  @media (max-width: 980px) {
+    .dv-mindmap-desktop { display: none !important; }
+    .dv-mindmap-mobile { display: block !important; }
+    .dv-mm-cta { display: none !important; }
+  }
+  .dv-mm-pill:hover { border-color: #3A4A6A !important; background: #17171A !important; }
+
+  @media (max-width: 480px) {
+    .dv-scenarios-grid { grid-template-columns: 1fr !important; }
+    .dv-uses-grid { grid-template-columns: 1fr !important; }
+    .dv-cat-grid { grid-template-columns: 1fr !important; }
+    .dv-faq-q { font-size: 17px !important; }
+    /* Trust bar: stack */
+    .dv-trust-bar { gap: 10px !important; }
+    .dv-trust-bar > div:last-child { width: 100%; justify-content: space-between !important; }
+  }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<!-- Dalivim runtime config + API client (backend on Railway). config.js sets
+     window.DALIVIM_API_BASE_URL; api.js exposes window.DalivimAPI. -->
+<script src="assets/config.js"></script>
+<script src="src/api.js"></script>
+
+<script src="src/image-slot.js"></script>
+<script type="text/babel" src="src/Atoms.jsx"></script>
+<script type="text/babel" src="src/Icons.jsx"></script>
+<script type="text/babel" src="src/MicroExperience.jsx"></script>
+<script type="text/babel" src="src/Hero.jsx"></script>
+<script type="text/babel" src="src/EscrowFlow.jsx"></script>
+<script type="text/babel" src="src/Sections.jsx"></script>
+<script type="text/babel" src="src/Integra.jsx"></script>
+<script type="text/babel" src="src/Faq.jsx"></script>
+<script type="text/babel" src="src/tweaks-panel.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "headlineText": "Medo de pagar e não receber?",
+  "resolutionText": "Sem problema. A gente garante.",
+  "animatedHeadline": false,
+  "variant": "v3"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const v = t.variant;
+  const variants = [
+    { key: 'v1', name: 'Institucional', sub: 'Paper calmo · card central' },
+    { key: 'v2', name: 'Ledger',        sub: 'Documento/boleto com header preto' },
+    { key: 'v3', name: 'Pergunta',      sub: 'Tipografia gigante · fundo pontilhado' },
+  ];
+
+  return (
+    <main>
+      <div data-screen-label="Landing" style={{ animation: 'dv-fade-in 360ms cubic-bezier(0.2,0.6,0.2,1)' }}>
+        <Header/>
+        <HeroWithMicro variant={t.variant} tweaks={t}/>
+        <EscrowFlow/>
+        <Contrast/>
+        <Integra/>
+        <SimulacaoSection variant={t.variant}/>
+        <Categorias/>
+        <Faq/>
+        <FinalCta/>
+        <Footer/>
+      </div>
+
+      <TweaksPanel>
+        <TweakSection label="Simulação"/>
+        <TweakRadio  label="Estilo do card" value={t.variant}
+                     options={['v1','v2','v3']}
+                     onChange={v => setTweak('variant', v)}/>
+      </TweaksPanel>
+    </main>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Cloudflare Pages headers (https://developers.cloudflare.com/pages/configuration/headers/).
+# Intentionally conservative: the bundles load React/Babel from a CDN and use
+# inline scripts/styles, so no Content-Security-Policy is set here (it would
+# break them). These two are safe and apply to every response.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

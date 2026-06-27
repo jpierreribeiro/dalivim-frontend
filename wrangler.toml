@@ -1,0 +1,16 @@
+# Cloudflare Pages configuration.
+#
+# Two ways to deploy this repo:
+#
+# 1) Git integration (recommended): connect this GitHub repo to a Cloudflare
+#    Pages project in the dashboard. Build settings:
+#      Framework preset:  Next.js (Static HTML Export)
+#      Build command:     npm run build
+#      Build output dir:  out
+#    Then add the env var NEXT_PUBLIC_API_BASE_URL (see .env.example).
+#
+# 2) Direct upload from your machine:  npm run pages:deploy
+#    (builds locally, then `wrangler pages deploy out`).
+name = "dalivim-frontend"
+pages_build_output_dir = "out"
+compatibility_date = "2024-10-01"

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<title>Dalivim — Fases</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="assets/dalivim-mark.svg"/>
+<link rel="stylesheet" href="assets/colors_and_type.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; color: #0A0A0A;
+    font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+  ::selection { background: #1E4BA0; color: #fff; }
+
+  @keyframes dv-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dv-step {
+    from { transform: translate3d(10px, 0, 0); }
+    to   { transform: translate3d(0, 0, 0); }
+  }
+  @keyframes dv-rise {
+    from { transform: translate3d(0, 14px, 0); }
+    to   { transform: translate3d(0, 0, 0); }
+  }
+  @keyframes dv-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes dv-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(30,75,160,0.0); }
+    50%      { box-shadow: 0 0 0 5px rgba(30,75,160,0.16); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 560px) {
+    .dv-persona button { padding: 6px 11px !important; font-size: 12.5px !important; }
+  }
+
+  .dv-mobile-bar { display: none; }
+  @media (max-width: 640px) {
+    .dv-mobile-bar { display: flex !important; }
+    .dv-desktop-action { display: none !important; }
+    main { padding-bottom: 150px !important; padding-top: 26px !important; }
+    .dv-overlay { align-items: flex-end !important; padding: 0 !important; }
+    .dv-sheet {
+      max-width: 100% !important; width: 100% !important;
+      border-radius: 26px 26px 0 0 !important;
+      padding: 26px 22px calc(26px + env(safe-area-inset-bottom)) !important;
+      animation: dv-rise 320ms cubic-bezier(0.2,0.8,0.2,1) !important;
+    }
+  }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<!-- Dalivim runtime config + API client (backend on Railway). config.js sets
+     window.DALIVIM_API_BASE_URL; api.js exposes window.DalivimAPI. -->
+<script src="assets/config.js"></script>
+<script src="src/api.js"></script>
+
+<script type="text/babel" src="src/Icons.jsx"></script>
+<script type="text/babel" src="src/app/data.jsx"></script>
+<script type="text/babel" src="src/app/UI.jsx"></script>
+<script type="text/babel" src="src/app/Shell.jsx"></script>
+<script type="text/babel" src="src/app/Negotiation.jsx"></script>
+<script type="text/babel" src="src/app/Milestones.jsx"></script>
+<script type="text/babel" src="src/app/FasesPage.jsx"></script>
+</body>
+</html>

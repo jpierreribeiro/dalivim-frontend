@@ -1,0 +1,351 @@
+/* =========================================================
+   Dalivim — Colors & Type Tokens — v2
+   System of record. Contract enforcement by design.
+   Ink dominates. Blue is the interaction layer only.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ---------- BASE PALETTE ---------- */
+
+  /* Ink — the authority. This is the brand color. */
+  --dv-ink:            #0A0A0A;   /* primary surface + text */
+  --dv-ink-2:          #141416;   /* elevated surface on dark */
+  --dv-ink-3:          #1C1C20;   /* second elevation */
+  --dv-ink-4:          #2A2A2E;   /* borders on dark, dividers */
+  --dv-ink-5:          #3F3F46;   /* muted element on dark */
+
+  /* Paper — reserved for dense content surfaces (tables, forms, reading) */
+  --dv-paper:          #FFFFFF;
+  --dv-paper-2:        #FAFAFA;
+  --dv-paper-3:        #F4F4F5;
+
+  /* Structural neutrals */
+  --dv-border:         #1C1C20;   /* default borders now read on dark */
+  --dv-border-light:   #E4E4E7;   /* hairline on paper surfaces */
+  --dv-border-strong:  #3F3F46;
+  --dv-muted:          #71717A;   /* secondary text on paper */
+  --dv-muted-2:        #A1A1AA;   /* tertiary on paper */
+  --dv-muted-dark:     #8A8A92;   /* secondary text on ink */
+  --dv-muted-dark-2:   #5A5A62;   /* tertiary on ink */
+
+  /* Blue — INTERACTION ONLY.
+     Not a background. Not decoration. Never a gradient.
+     Applied to primary CTAs, focus rings, active states,
+     and the precise moment a user commits an action. */
+  --dv-blue-500:       #1E4BA0;   /* interaction primary */
+  --dv-blue-600:       #153A82;   /* hover */
+  --dv-blue-700:       #0B2A63;   /* pressed */
+
+  /* Semantic — state indication only, never decoration */
+  --dv-success:        #1E8A5A;
+  --dv-warning:        #B45309;
+  --dv-danger:         #B42318;
+
+  /* ---------- ROLE TOKENS ---------- */
+
+  /* Defaults invert the old system: ink is primary, paper is the exception */
+  --dv-bg:             var(--dv-ink);
+  --dv-bg-elevated:    var(--dv-ink-2);
+  --dv-bg-elevated-2:  var(--dv-ink-3);
+  --dv-bg-paper:       var(--dv-paper);          /* opt-in light surface */
+  --dv-bg-paper-2:     var(--dv-paper-2);
+
+  --dv-fg:             var(--dv-paper);
+  --dv-fg-muted:       var(--dv-muted-dark);
+  --dv-fg-muted-2:     var(--dv-muted-dark-2);
+
+  --dv-fg-on-paper:         var(--dv-ink);
+  --dv-fg-on-paper-muted:   var(--dv-muted);
+  --dv-fg-on-paper-muted-2: var(--dv-muted-2);
+
+  --dv-border-default: var(--dv-ink-4);          /* borders on dark default */
+  --dv-border-on-paper: var(--dv-border-light);
+
+  /* Authority — the near-black used for section chrome, nav, headers */
+  --dv-authority:      var(--dv-ink);
+  --dv-authority-fg:   var(--dv-paper);
+
+  /* Interaction tokens — the ONLY place blue belongs */
+  --dv-action:         var(--dv-blue-500);
+  --dv-action-hover:   var(--dv-blue-600);
+  --dv-action-pressed: var(--dv-blue-700);
+  --dv-action-fg:      var(--dv-paper);
+  --dv-focus-ring:     0 0 0 3px rgba(30,75,160,0.45);
+
+  /* Legacy alias (kept so existing kits don't break during transition).
+     New work should use --dv-action*. */
+  --dv-accent:         var(--dv-action);
+  --dv-accent-hover:   var(--dv-action-hover);
+  --dv-accent-pressed: var(--dv-action-pressed);
+  --dv-accent-fg:      var(--dv-action-fg);
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --dv-font-display:   'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dv-font-body:      'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dv-font-mono:      ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+  /* Scale — pushed larger and more extreme. Hierarchy reads across a room. */
+  --dv-text-xs:        12px;
+  --dv-text-sm:        14px;
+  --dv-text-base:      16px;
+  --dv-text-md:        17px;
+  --dv-text-lg:        20px;
+  --dv-text-xl:        24px;
+  --dv-text-2xl:       32px;
+  --dv-text-3xl:       44px;
+  --dv-text-4xl:       60px;
+  --dv-text-5xl:       80px;
+  --dv-text-6xl:       112px;
+  --dv-text-7xl:       144px;    /* billboard — used when a single word must land */
+
+  /* Weights — medium is the ceiling for display; body uses regular */
+  --dv-fw-regular:     400;
+  --dv-fw-medium:      500;
+  --dv-fw-semibold:    600;
+  --dv-fw-bold:        700;
+
+  /* Line heights — tighter across the board for a more 'set' feel */
+  --dv-lh-tight:       0.96;   /* billboard: near-touching caps */
+  --dv-lh-display:     1.02;   /* hero */
+  --dv-lh-heading:     1.08;   /* section heads */
+  --dv-lh-snug:        1.2;    /* card titles */
+  --dv-lh-normal:      1.5;    /* body */
+  --dv-lh-relaxed:     1.6;    /* long-form */
+
+  /* Tracking — pulled in harder at display sizes */
+  --dv-track-billboard: -0.035em;
+  --dv-track-tight:    -0.028em;
+  --dv-track-display:  -0.022em;
+  --dv-track-snug:     -0.014em;
+  --dv-track-normal:   0em;
+  --dv-track-label:    0.02em;
+  --dv-track-caps:     0.12em;   /* wider on uppercase eyebrows for a stamped feel */
+  --dv-track-mono:     0.04em;
+
+  /* ---------- SHAPE & SPACE ---------- */
+  /* Radii reduced. Softness was friendly — this system is not. */
+  --dv-radius-xs:      2px;
+  --dv-radius-sm:      4px;
+  --dv-radius-md:      6px;
+  --dv-radius-lg:      10px;
+  --dv-radius-xl:      14px;
+  --dv-radius-2xl:     18px;
+  --dv-radius-pill:    9999px;   /* still used for CTAs — the only round thing */
+
+  --dv-space-1:        4px;
+  --dv-space-2:        8px;
+  --dv-space-3:        12px;
+  --dv-space-4:        16px;
+  --dv-space-5:        20px;
+  --dv-space-6:        24px;
+  --dv-space-8:        32px;
+  --dv-space-10:       40px;
+  --dv-space-12:       48px;
+  --dv-space-16:       64px;
+  --dv-space-20:       80px;
+  --dv-space-24:       96px;
+  --dv-space-32:       128px;
+  --dv-space-40:       160px;
+  --dv-space-48:       192px;
+
+  /* No shadows. Elevation comes from surface color (ink-2, ink-3). */
+  --dv-shadow-none:    none;
+  --dv-ring-focus:     var(--dv-focus-ring);
+
+  --dv-ease:           cubic-bezier(0.2, 0.6, 0.2, 1);
+  --dv-dur-fast:       120ms;
+  --dv-dur:            180ms;
+  --dv-dur-slow:       360ms;
+
+  --dv-max-narrow:     720px;
+  --dv-max-prose:      880px;
+  --dv-max-container:  1200px;
+  --dv-max-wide:       1440px;
+}
+
+/* =========================================================
+   SEMANTIC ELEMENT STYLES
+   Default theme is DARK. Add .dv-on-paper to any container
+   that should be a light surface (forms, dense tables, reading).
+   ========================================================= */
+
+html, body {
+  font-family: var(--dv-font-body);
+  font-size: var(--dv-text-base);
+  line-height: var(--dv-lh-normal);
+  color: var(--dv-fg);
+  background: var(--dv-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--dv-action); color: var(--dv-action-fg); }
+
+/* Paper surface — opt-in light container for dense content */
+.dv-on-paper {
+  background: var(--dv-bg-paper);
+  color: var(--dv-fg-on-paper);
+}
+.dv-on-paper .dv-muted { color: var(--dv-fg-on-paper-muted); }
+
+/* ---------- DISPLAY TYPE ---------- */
+
+/* Billboard — one-word finality. Massive, near-touching caps. */
+.dv-billboard {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: clamp(80px, 12vw, var(--dv-text-7xl));
+  line-height: var(--dv-lh-tight);
+  letter-spacing: var(--dv-track-billboard);
+  color: currentColor;
+}
+
+.dv-display-xl, h1.dv-hero {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: clamp(60px, 9vw, var(--dv-text-6xl));
+  line-height: var(--dv-lh-display);
+  letter-spacing: var(--dv-track-tight);
+  color: currentColor;
+}
+
+.dv-display-lg, h1 {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: clamp(48px, 7vw, var(--dv-text-5xl));
+  line-height: var(--dv-lh-display);
+  letter-spacing: var(--dv-track-display);
+  color: currentColor;
+}
+
+.dv-h1, h2 {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: clamp(36px, 5vw, var(--dv-text-4xl));
+  line-height: var(--dv-lh-heading);
+  letter-spacing: var(--dv-track-display);
+  color: currentColor;
+}
+
+.dv-h2, h3 {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: var(--dv-text-3xl);
+  line-height: var(--dv-lh-snug);
+  letter-spacing: var(--dv-track-snug);
+  color: currentColor;
+}
+
+.dv-h3, h4 {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: var(--dv-text-2xl);
+  line-height: var(--dv-lh-snug);
+  letter-spacing: var(--dv-track-snug);
+  color: currentColor;
+}
+
+.dv-h4, h5 {
+  font-family: var(--dv-font-display);
+  font-weight: var(--dv-fw-medium);
+  font-size: var(--dv-text-xl);
+  line-height: var(--dv-lh-snug);
+  color: currentColor;
+}
+
+/* ---------- BODY TYPE ---------- */
+
+.dv-lead, p.dv-lead {
+  font-family: var(--dv-font-body);
+  font-weight: var(--dv-fw-regular);
+  font-size: var(--dv-text-lg);
+  line-height: var(--dv-lh-relaxed);
+  color: var(--dv-fg-muted);
+}
+
+.dv-body, p {
+  font-family: var(--dv-font-body);
+  font-weight: var(--dv-fw-regular);
+  font-size: var(--dv-text-md);
+  line-height: var(--dv-lh-relaxed);
+  color: currentColor;
+}
+
+.dv-body-sm, small {
+  font-family: var(--dv-font-body);
+  font-size: var(--dv-text-sm);
+  line-height: var(--dv-lh-normal);
+  color: var(--dv-fg-muted);
+}
+
+/* Eyebrow — the system's "classification stamp".
+   Uppercase, wide-tracked, monospace-adjacent feel. */
+.dv-eyebrow {
+  font-family: var(--dv-font-body);
+  font-weight: var(--dv-fw-medium);
+  font-size: var(--dv-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--dv-track-caps);
+  color: var(--dv-fg-muted);
+}
+
+.dv-label {
+  font-family: var(--dv-font-body);
+  font-weight: var(--dv-fw-medium);
+  font-size: var(--dv-text-sm);
+  letter-spacing: var(--dv-track-label);
+  color: currentColor;
+}
+
+/* Mono — used for ID numbers, timestamps, amounts, ledger lines.
+   The 'system of record' has a voice and it's this one. */
+.dv-mono {
+  font-family: var(--dv-font-mono);
+  font-size: 0.95em;
+  letter-spacing: var(--dv-track-mono);
+}
+
+.dv-code, code {
+  font-family: var(--dv-font-mono);
+  font-size: 0.9em;
+  background: var(--dv-ink-3);
+  color: var(--dv-paper);
+  padding: 0.12em 0.4em;
+  border-radius: var(--dv-radius-xs);
+  letter-spacing: var(--dv-track-mono);
+}
+.dv-on-paper .dv-code, .dv-on-paper code {
+  background: var(--dv-paper-3);
+  color: var(--dv-ink);
+}
+
+/* Muted qualifier — "Medo de não receber? <span class='dv-muted'>A gente garante.</span>" */
+.dv-muted { color: var(--dv-fg-muted); }
+.dv-muted-2 { color: var(--dv-fg-muted-2); }
+
+/* Links — understated. Underline on ink surfaces reads as system-referenced. */
+a.dv-link, .dv-link {
+  color: inherit;
+  text-decoration: none;
+  transition: opacity var(--dv-dur) var(--dv-ease);
+}
+a.dv-link:hover, .dv-link:hover { opacity: 0.7; }
+
+/* ---------- INTERACTION PRIMITIVES ---------- */
+/* These are the ONLY elements that carry blue. */
+
+.dv-action {
+  background: var(--dv-action);
+  color: var(--dv-action-fg);
+  border: 1px solid var(--dv-action);
+  transition: background var(--dv-dur-fast) var(--dv-ease);
+}
+.dv-action:hover { background: var(--dv-action-hover); border-color: var(--dv-action-hover); }
+.dv-action:active { background: var(--dv-action-pressed); border-color: var(--dv-action-pressed); }
+.dv-action:focus-visible { outline: none; box-shadow: var(--dv-focus-ring); }
+
+/* Divider — hairline, reads on both surfaces */
+.dv-rule { border: 0; border-top: 1px solid var(--dv-border-default); }
+.dv-on-paper .dv-rule { border-top-color: var(--dv-border-on-paper); }
