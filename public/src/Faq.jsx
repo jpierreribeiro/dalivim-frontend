@@ -337,8 +337,8 @@ function Footer() {
           </div>
           <span>© 2026 Dalivim — Pix com garantia de entrega.</span>
           <div style={{ display: 'flex', gap: 20 }}>
-            <a href="#" style={{ color: '#8A8A92', textDecoration: 'none' }}>Termos</a>
-            <a href="#" style={{ color: '#8A8A92', textDecoration: 'none' }}>Privacidade</a>
+            <a href="/termos" style={{ color: '#8A8A92', textDecoration: 'none' }}>Termos</a>
+            <a href="/privacidade" style={{ color: '#8A8A92', textDecoration: 'none' }}>Privacidade</a>
             <a href="mailto:contato@dalivim.com.br" style={{ color: '#8A8A92', textDecoration: 'none' }}>Contato</a>
           </div>
         </div>

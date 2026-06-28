@@ -700,7 +700,7 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         fontFamily: "'Inter', sans-serif", fontSize: 12, lineHeight: 1.6, color: '#A1A1AA',
         margin: '22px 0 0',
       }}>
-        Ao continuar, você concorda com os <a href="#" style={{ color: '#52525B' }}>Termos</a> e a <a href="#" style={{ color: '#52525B' }}>Privacidade</a> da Dalivim.
+        Ao continuar, você concorda com os <a href="/termos" target="_top" style={{ color: '#52525B' }}>Termos</a> e a <a href="/privacidade" target="_top" style={{ color: '#52525B' }}>Privacidade</a> da Dalivim.
       </p>
     </div>
   );
