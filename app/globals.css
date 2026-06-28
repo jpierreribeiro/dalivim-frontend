@@ -1,0 +1,86 @@
+/* Global styles for the server-rendered Next.js pages (homepage + legal).
+   Brand fonts + tokens mirror public/assets/colors_and_type.css so the
+   statically-rendered homepage matches the interactive bundles. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: light;
+  --dv-ink: #0A0A0A;
+  --dv-blue: #1E4BA0;
+  --dv-blue-600: #153A82;
+  --dv-green: #16794C;
+  --dv-paper: #FFFFFF;
+  --dv-paper-2: #FAFAFA;
+  --dv-paper-3: #F4F4F5;
+  --dv-border: #E4E4E7;
+  --dv-border-2: #ECECEF;
+  --dv-muted: #71717A;
+  --dv-muted-2: #A1A1AA;
+  --dv-text-2: #52525B;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { margin: 0; }
+a { color: inherit; }
+img, svg { max-width: 100%; }
+
+/* ── Layout helpers ─────────────────────────────────────────── */
+.dv-container { max-width: 1180px; margin: 0 auto; padding: 0 clamp(18px, 4vw, 28px); }
+.dv-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.dv-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.dv-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Inter', system-ui, sans-serif; font-weight: 500; font-size: 15.5px;
+  padding: 14px 24px; border-radius: 9999px; text-decoration: none;
+  border: 1px solid transparent; cursor: pointer; transition: background 200ms, color 200ms, border-color 200ms;
+}
+.dv-btn-dark { background: #0A0A0A; color: #fff; }
+.dv-btn-dark:hover { background: #1f1f24; }
+.dv-btn-primary { background: #1E4BA0; color: #fff; }
+.dv-btn-primary:hover { background: #153A82; }
+.dv-btn-ghost { background: transparent; color: #0A0A0A; border-color: #E4E4E7; }
+.dv-btn-ghost:hover { border-color: #1E4BA0; color: #1E4BA0; }
+
+/* ── Header nav ─────────────────────────────────────────────── */
+.dv-nav { display: inline-flex; align-items: center; gap: 4px; }
+.dv-nav a {
+  padding: 8px 14px; font-size: 14px; font-weight: 500; color: #52525B;
+  text-decoration: none; border-radius: 9999px; transition: background 180ms, color 180ms;
+}
+.dv-nav a:hover { background: rgba(10,10,10,0.05); color: #0A0A0A; }
+.dv-header-login { font-size: 14px; font-weight: 500; color: #0A0A0A; text-decoration: none; padding: 10px 14px; }
+.dv-header-login:hover { color: #1E4BA0; }
+
+/* ── Cards & links ──────────────────────────────────────────── */
+.dv-card {
+  background: #fff; border: 1px solid #ECECEF; border-radius: 18px; padding: 26px;
+  transition: border-color 220ms, transform 220ms, box-shadow 220ms;
+}
+.dv-card-hover:hover { border-color: #1E4BA0; transform: translateY(-3px); box-shadow: 0 18px 40px -24px rgba(30,75,160,0.35); }
+.dv-textlink { color: #1E4BA0; text-decoration: none; font-weight: 500; }
+.dv-textlink:hover { text-decoration: underline; }
+
+/* ── FAQ native accordion (no JS, fully crawlable) ──────────── */
+.dv-faq-item { border-top: 1px solid #ECECEF; }
+.dv-faq-item summary {
+  list-style: none; cursor: pointer; padding: 24px 0;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 500; font-size: 18px;
+  letter-spacing: -0.01em; color: #0A0A0A;
+}
+.dv-faq-item summary::-webkit-details-marker { display: none; }
+.dv-faq-item summary::after {
+  content: '+'; flex-shrink: 0; color: #1E4BA0; font-size: 22px; line-height: 1;
+  transition: transform 200ms;
+}
+.dv-faq-item[open] summary::after { content: '−'; }
+.dv-faq-item p { margin: 0 0 24px; font-size: 15.5px; line-height: 1.65; color: #52525B; max-width: 70ch; }
+
+/* ── Responsive: collapse header nav on phones ──────────────── */
+@media (max-width: 760px) {
+  .dv-nav { display: none; }
+  .dv-header-login { display: none; }
+}
