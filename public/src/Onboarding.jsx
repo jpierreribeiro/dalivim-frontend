@@ -10,6 +10,15 @@ function obLoad() {
   try { return JSON.parse(localStorage.getItem(OB_LS)) || null; } catch (e) { return null; }
 }
 
+// A valid v4 UUID (used as a placeholder Pix key at signup; see register call).
+function randomUUID() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 // ---------- small primitives ----------
 function OBField({ label, hint, children }) {
   return (
@@ -540,8 +549,13 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         resp = await DalivimAPI.post('/auth/register', {
           email: email.trim(), password,
           full_name: name.trim(),
-          type: 'seller', // this surface onboards sellers; Pix key is set later
-                          // in the "Identidade e Pix" step (PATCH /seller/pix-key).
+          type: 'seller',
+          // Placeholder Pix key (a valid random/UUID key) so signup works
+          // against the currently-deployed backend, which still requires one.
+          // It's overwritten by the real key in the "Identidade e Pix" step
+          // (PATCH /seller/pix-key). Once the backend that makes pix_key
+          // optional is deployed, this can be dropped.
+          pix_key: randomUUID(),
         }, { auth: false });
       } else {
         resp = await DalivimAPI.post('/auth/login', {
