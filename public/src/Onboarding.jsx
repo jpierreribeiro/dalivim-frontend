@@ -635,6 +635,12 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         margin: '0 0 28px', color: '#0A0A0A',
       }}>{view === 'email' && mode === 'login' ? 'Entrar na sua conta' : 'Crie sua conta protegida'}</h1>
 
+      {view === 'email' && mode === 'register' && (
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, lineHeight: 1.5, color: '#71717A', margin: '-16px 0 22px' }}>
+          Cadastro rápido. Em seguida você configura identidade, Pix e sua primeira negociação.
+        </p>
+      )}
+
       {view === 'choices' ? (
         <>
           {googleBtn}
