@@ -12,6 +12,7 @@
 (function () {
   var BASE = (window.DALIVIM_API_BASE_URL || '').replace(/\/+$/, '');
   var TOKEN_KEY = 'dalivim.jwt';
+  var USER_KEY = 'dalivim.user';
 
   function getToken() {
     try { return window.localStorage.getItem(TOKEN_KEY) || null; } catch (e) { return null; }
@@ -19,8 +20,18 @@
   function setToken(token) {
     try {
       if (token) window.localStorage.setItem(TOKEN_KEY, token);
-      else window.localStorage.removeItem(TOKEN_KEY);
+      else { window.localStorage.removeItem(TOKEN_KEY); window.localStorage.removeItem(USER_KEY); }
     } catch (e) { /* storage unavailable (private mode / sandbox) — ignore */ }
+  }
+  // Lightweight identity cache (full_name, email…) for greetings/avatar.
+  function getUser() {
+    try { return JSON.parse(window.localStorage.getItem(USER_KEY)) || null; } catch (e) { return null; }
+  }
+  function setUser(user) {
+    try {
+      if (user) window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+      else window.localStorage.removeItem(USER_KEY);
+    } catch (e) { /* ignore */ }
   }
 
   async function request(method, path, body, opts) {
@@ -61,6 +72,8 @@
     baseUrl: BASE,
     getToken: getToken,
     setToken: setToken,
+    getUser: getUser,
+    setUser: setUser,
     get: function (path, opts) { return request('GET', path, null, opts); },
     post: function (path, body, opts) { return request('POST', path, body, opts); },
     patch: function (path, body, opts) { return request('PATCH', path, body, opts); },

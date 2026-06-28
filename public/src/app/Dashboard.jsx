@@ -6,7 +6,8 @@ function greeting() {
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 }
 
-function Dashboard({ negotiations, persona, onOpen, onNew }) {
+function Dashboard({ negotiations, persona, onOpen, onNew, userName }) {
+  const firstName = (userName || '').trim().split(/\s+/)[0];
   // Split by whether the current persona must act
   const { needsYou, watching } = useMemo(() => {
     const needsYou = [], watching = [];
@@ -30,7 +31,7 @@ function Dashboard({ negotiations, persona, onOpen, onNew }) {
             fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500,
             fontSize: 'clamp(34px, 5vw, 46px)', letterSpacing: '-0.028em',
             lineHeight: 1.02, margin: 0, color: '#0A0A0A',
-          }}>{greeting()}, Jean.</h1>
+          }}>{greeting()}{firstName ? ', ' + firstName : ''}.</h1>
         </div>
         <span className="dv-desktop-action">
           <PrimaryButton tone="soft" onClick={onNew}>

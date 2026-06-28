@@ -100,6 +100,8 @@ function App() {
   const [negotiations, setNegotiations] = useState(seedNegotiations);
   const [invoices, setInvoices] = useState(seedInvoices);
   const [route, setRoute] = useState({ view: 'dashboard', id: null });
+  const [userName, setUserName] = useState(() =>
+    (window.DalivimAPI && DalivimAPI.getUser && (DalivimAPI.getUser() || {}).full_name) || '');
 
   // Signed in → replace the demo seed with the seller's real data:
   // GET /transactions (negotiations) + GET /invoices (charges). Anonymous
@@ -109,6 +111,14 @@ function App() {
     let cancelled = false;
     // Logged-in user is a seller — show the seller's lens, not the demo buyer one.
     setTweak('persona', 'vendedor');
+
+    DalivimAPI.get('/me/status')
+      .then(res => {
+        if (cancelled) return;
+        const u = res && res.user;
+        if (u && u.full_name) { setUserName(u.full_name); DalivimAPI.setUser(u); }
+      })
+      .catch(() => { /* keep cached/empty name */ });
 
     DalivimAPI.get('/transactions?page=1&page_size=50&sort_by=created_at&sort_order=desc')
       .then(res => {
@@ -243,14 +253,15 @@ function App() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA' }}>
-      <TopBar persona={persona} setPersona={p => setTweak('persona', p)} onHome={onHome} onSettings={goSettings}/>
+      <TopBar persona={persona} setPersona={p => setTweak('persona', p)} onHome={onHome} onSettings={goSettings}
+        initial={(userName.trim()[0] || 'D').toUpperCase()}/>
 
       <main style={{ maxWidth: 720, margin: '0 auto', padding: '38px 22px 120px' }}>
         {(route.view === 'dashboard' || route.view === 'invoices') && (
           <HomeTabs active={route.view} onNegs={goHome} onInvoices={goInvoices}/>
         )}
         {route.view === 'dashboard' && (
-          <Dashboard negotiations={negotiations} persona={persona} onOpen={open} onNew={goNew}/>
+          <Dashboard negotiations={negotiations} persona={persona} onOpen={open} onNew={goNew} userName={userName}/>
         )}
         {route.view === 'settings' && (
           <SettingsPage onBack={onHome}/>

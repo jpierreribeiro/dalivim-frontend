@@ -549,6 +549,7 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         }, { auth: false });
       }
       if (resp && resp.token) DalivimAPI.setToken(resp.token);
+      if (resp && resp.user) DalivimAPI.setUser(resp.user);
       // Seed the guided-setup data from the account we just got.
       if (resp && resp.user && resp.user.full_name) set('name', resp.user.full_name);
       onAuthed(resp, mode);
