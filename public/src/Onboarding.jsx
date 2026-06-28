@@ -546,17 +546,22 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
     try {
       let resp;
       if (mode === 'register') {
-        resp = await DalivimAPI.post('/auth/register', {
-          email: email.trim(), password,
-          full_name: name.trim(),
-          type: 'seller',
-          // Placeholder Pix key (a valid random/UUID key) so signup works
-          // against the currently-deployed backend, which still requires one.
-          // It's overwritten by the real key in the "Identidade e Pix" step
-          // (PATCH /seller/pix-key). Once the backend that makes pix_key
-          // optional is deployed, this can be dropped.
-          pix_key: randomUUID(),
-        }, { auth: false });
+        // Register clean (no pix_key) — the seller sets the real key later in
+        // the "Identidade e Pix" step. If the deployed backend still requires
+        // a Pix key for sellers, retry once with a valid placeholder UUID
+        // (overwritten by the real key in onboarding). This keeps signup
+        // working across backend versions and self-cleans once the backend
+        // that makes pix_key optional is live.
+        const regBody = { email: email.trim(), password, full_name: name.trim(), type: 'seller' };
+        try {
+          resp = await DalivimAPI.post('/auth/register', regBody, { auth: false });
+        } catch (e) {
+          if (e.status === 422 && /pix.?key/i.test(e.message || '')) {
+            resp = await DalivimAPI.post('/auth/register', { ...regBody, pix_key: randomUUID() }, { auth: false });
+          } else {
+            throw e;
+          }
+        }
       } else {
         resp = await DalivimAPI.post('/auth/login', {
           email: email.trim(), password,
