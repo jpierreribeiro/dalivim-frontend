@@ -186,12 +186,14 @@ function Faq() {
               marginTop: 'clamp(40px, 9vw, 96px)', textDecoration: 'none',
               position: 'relative'
             }}>
-              <image-slot
-                id="faq-support"
-                shape="rounded" radius="18"
-                style={{ width: '108px', height: '108px', flexShrink: 0, display: 'block' }}
-                placeholder="Foto do time">
-              </image-slot>
+              <span style={{
+                width: '108px', height: '108px', flexShrink: 0, borderRadius: 18,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                background: 'linear-gradient(135deg, #EEF3FB, #DCE7F6)', border: '1px solid #DCE7F6',
+              }}>
+                <img src="assets/icons3d/users.png" alt="Time de suporte da Dalivim"
+                  style={{ width: 64, height: 64, display: 'block' }} />
+              </span>
               <span className="dv-faq-chip" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 9,
                 marginLeft: -22,

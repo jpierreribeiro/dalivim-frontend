@@ -540,8 +540,8 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         resp = await DalivimAPI.post('/auth/register', {
           email: email.trim(), password,
           full_name: name.trim(),
-          type: 'seller',        // this surface onboards sellers (receive protected Pix)
-          pix_key: email.trim(), // sane default; refined later in "Conecte seu Pix"
+          type: 'seller', // this surface onboards sellers; Pix key is set later
+                          // in the "Identidade e Pix" step (PATCH /seller/pix-key).
         }, { auth: false });
       } else {
         resp = await DalivimAPI.post('/auth/login', {

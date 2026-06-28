@@ -97,8 +97,11 @@ function App() {
   const persona = t.persona === 'vendedor' ? 'vendedor' : 'comprador';
   const variant = VARIANT_MAP[t.variant] || 'timeline';
 
-  const [negotiations, setNegotiations] = useState(seedNegotiations);
-  const [invoices, setInvoices] = useState(seedInvoices);
+  // Signed-in users start EMPTY (their real data loads from the API below) so
+  // the demo seed never flashes; anonymous visitors get the seed for the demo.
+  const signedIn = !!(window.DalivimAPI && DalivimAPI.getToken && DalivimAPI.getToken());
+  const [negotiations, setNegotiations] = useState(() => signedIn ? [] : seedNegotiations());
+  const [invoices, setInvoices] = useState(() => signedIn ? [] : seedInvoices());
   const [route, setRoute] = useState({ view: 'dashboard', id: null });
   const [userName, setUserName] = useState(() =>
     (window.DalivimAPI && DalivimAPI.getUser && (DalivimAPI.getUser() || {}).full_name) || '');
