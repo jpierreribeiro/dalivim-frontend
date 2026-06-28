@@ -105,6 +105,18 @@ function App() {
   const [route, setRoute] = useState({ view: 'dashboard', id: null });
   const [userName, setUserName] = useState(() =>
     (window.DalivimAPI && DalivimAPI.getUser && (DalivimAPI.getUser() || {}).full_name) || '');
+  const [emailUnverified, setEmailUnverified] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [verifyNote, setVerifyNote] = useState('');   // '', 'sending', 'sent', 'error'
+  const [bannerHidden, setBannerHidden] = useState(false);
+
+  const resendVerification = () => {
+    if (verifyNote === 'sending' || !verifyEmail) return;
+    setVerifyNote('sending');
+    DalivimAPI.post('/auth/resend-verification', { email: verifyEmail }, { auth: false })
+      .then(() => setVerifyNote('sent'))
+      .catch(() => setVerifyNote('error'));
+  };
 
   // Signed in → replace the demo seed with the seller's real data:
   // GET /transactions (negotiations) + GET /invoices (charges). Anonymous
@@ -120,6 +132,7 @@ function App() {
         if (cancelled) return;
         const u = res && res.user;
         if (u && u.full_name) { setUserName(u.full_name); DalivimAPI.setUser(u); }
+        if (u) { setEmailUnverified(u.email_verified === false); setVerifyEmail(u.email || ''); }
       })
       .catch(() => { /* keep cached/empty name */ });
 
@@ -258,6 +271,30 @@ function App() {
     <div style={{ minHeight: '100vh', background: '#FAFAFA' }}>
       <TopBar persona={persona} setPersona={p => setTweak('persona', p)} onHome={onHome} onSettings={goSettings}
         initial={(userName.trim()[0] || 'D').toUpperCase()}/>
+
+      {signedIn && emailUnverified && !bannerHidden && (
+        <div style={{ background: '#FBF1E3', borderBottom: '1px solid #F0E2C8' }}>
+          <div style={{
+            maxWidth: 720, margin: '0 auto', padding: '11px 22px',
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#7A4B0B',
+          }}>
+            <Icon name="message" size={15} color="#A1620B"/>
+            <span style={{ flex: 1, minWidth: 180 }}>
+              Confirme seu e-mail{verifyEmail ? ' (' + verifyEmail + ')' : ''} para garantir o recebimento dos avisos.
+            </span>
+            <button type="button" onClick={resendVerification} disabled={verifyNote === 'sending' || verifyNote === 'sent'} style={{
+              all: 'unset', cursor: verifyNote === 'sent' ? 'default' : 'pointer', fontWeight: 600,
+              color: verifyNote === 'sent' ? '#16794C' : '#A1620B',
+            }}>
+              {verifyNote === 'sent' ? 'Reenviado ✓' : verifyNote === 'sending' ? 'Enviando…' : verifyNote === 'error' ? 'Tentar de novo' : 'Reenviar'}
+            </button>
+            <button type="button" onClick={() => setBannerHidden(true)} aria-label="Dispensar" style={{
+              all: 'unset', cursor: 'pointer', color: '#A1620B', fontSize: 16, lineHeight: 1,
+            }}>×</button>
+          </div>
+        </div>
+      )}
 
       <main style={{ maxWidth: 720, margin: '0 auto', padding: '38px 22px 120px' }}>
         {(route.view === 'dashboard' || route.view === 'invoices') && (
