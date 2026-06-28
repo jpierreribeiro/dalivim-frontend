@@ -789,7 +789,21 @@ function OBDone({ data }) {
 // ---------- app ----------
 function OnboardingApp() {
   const saved = obLoad();
-  const [stage, setStage] = useState(saved?.stage ?? 'welcome');
+  const params = (() => { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(''); } })();
+  const hasAuthIntent = params.has('login') || params.has('signup');
+  const loggedIn = !!(window.DalivimAPI && DalivimAPI.getToken());
+  const savedStage = saved?.stage;
+  // "Entry" = not mid guided-setup (a numeric step 1..5). A signed-in user who
+  // lands on the entry — via login/signup links or a stale saved 'done' — goes
+  // straight to the app instead of replaying onboarding or seeing the old
+  // "Tudo configurado" screen.
+  const atEntry = savedStage == null || savedStage === 'welcome' || savedStage === 'done';
+  const redirectToApp = loggedIn && atEntry;
+
+  // With an explicit auth intent, ignore a stale saved stage (e.g. 'done').
+  const [stage, setStage] = useState(
+    redirectToApp ? 'redirect' : (hasAuthIntent ? 'welcome' : (savedStage ?? 'welcome'))
+  );
   const [data, setData] = useState(saved?.data ?? {
     account: 'pessoa',
     name: '', email: '', username: '', phone: '',
@@ -799,6 +813,11 @@ function OnboardingApp() {
     txType: '', value: 1500, order: 'pagamento',
   });
   const set = (k, v) => setData(d => ({ ...d, [k]: v }));
+
+  // Already signed in and at the onboarding entry → go to the app.
+  useEffect(() => {
+    if (redirectToApp) window.location.replace('App.html');
+  }, []);
 
   // Carry the landing "teste agora, 30 seg" choices into the guided setup, so
   // the first-negotiation step (4) arrives pre-filled. URL e.g.:
@@ -814,6 +833,7 @@ function OnboardingApp() {
   }, []);
 
   useEffect(() => {
+    if (stage === 'redirect') return; // transient — don't persist the redirect state
     try { localStorage.setItem(OB_LS, JSON.stringify({ stage, data })); } catch (e) {}
   }, [stage, data]);
 
@@ -838,7 +858,9 @@ function OnboardingApp() {
     return { view: 'choices', mode: 'register' };
   })();
 
-  if (stage === 'welcome') {
+  if (stage === 'redirect') {
+    body = <div aria-busy="true" style={{ minHeight: '50vh' }}/>;
+  } else if (stage === 'welcome') {
     body = <OBWelcome data={data} set={set} onStart={() => go(1)}
       initialView={authIntent.view} initialMode={authIntent.mode}
       onAuthed={(resp, mode) => {
