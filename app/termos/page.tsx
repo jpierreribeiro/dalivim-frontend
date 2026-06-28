@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import LegalShell, { H2 } from '../LegalShell';
 
-export const metadata = {
-  title: 'Termos de Serviço — Dalivim',
-  description: 'As regras de uso da plataforma Dalivim.',
+export const metadata: Metadata = {
+  title: 'Termos de Serviço',
+  description: 'As regras de uso da Dalivim, plataforma de pagamento protegido por escrow via Pix.',
+  alternates: { canonical: '/termos' },
+  openGraph: {
+    title: 'Termos de Serviço | Dalivim',
+    description: 'As regras de uso da plataforma Dalivim.',
+    url: '/termos',
+    type: 'article',
+  },
 };
 
 export default function Termos() {

@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import LegalShell, { H2 } from '../LegalShell';
 
-export const metadata = {
-  title: 'Política de Privacidade — Dalivim',
-  description: 'Como a Dalivim coleta, usa e protege seus dados.',
+export const metadata: Metadata = {
+  title: 'Política de Privacidade',
+  description: 'Como a Dalivim coleta, usa e protege seus dados pessoais no pagamento protegido por escrow via Pix.',
+  alternates: { canonical: '/privacidade' },
+  openGraph: {
+    title: 'Política de Privacidade | Dalivim',
+    description: 'Como a Dalivim coleta, usa e protege seus dados pessoais.',
+    url: '/privacidade',
+    type: 'article',
+  },
 };
 
 export default function Privacidade() {
