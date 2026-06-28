@@ -26,15 +26,24 @@ const ACTION_META = {
   },
 };
 
+// Real (server-backed) ids are UUIDs; demo seed ids (NG-…, M1) are not.
+function isUUID(s) { return /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(String(s)); }
+
 function Negotiation({ n, persona, variant, onBack, onAction, onMilestone, onViewMilestone, onOpenDispute, onViewDispute }) {
   const [confirming, setConfirming] = useState(null); // verb
   const [done, setDone] = useState(null);             // {okTitle, okBody}
   const a = nextAction(persona, n.status, n);
   const hasMs = n.milestones && n.milestones.length;
 
-  const runAction = (verb) => {
+  // Returns a promise; throws on API failure so the sheet can show the error.
+  const runAction = async (verb, notes) => {
     if (verb === 'deliver-ms' || verb === 'approve-ms') {
       const i = a.msIndex;
+      const milestone = n.milestones[i];
+      // Seller marks a phase delivered → POST .../deliver (real txs only).
+      if (verb === 'deliver-ms' && isUUID(n.id) && milestone && isUUID(milestone.id)) {
+        await DalivimAPI.post('/transactions/' + n.id + '/milestones/' + milestone.id + '/deliver', { delivery_notes: notes });
+      }
       onMilestone(n.id, i, verb === 'deliver-ms' ? 'entregue' : 'aprovado');
       setConfirming(null);
       setDone(verb === 'deliver-ms'
@@ -144,7 +153,7 @@ function Negotiation({ n, persona, variant, onBack, onAction, onMilestone, onVie
 
       {confirming && (
         <ConfirmSheet verb={confirming} n={n} milestone={a.msIndex != null ? n.milestones[a.msIndex] : null}
-          onCancel={() => setConfirming(null)} onConfirm={() => runAction(confirming)}/>
+          onCancel={() => setConfirming(null)} onConfirm={(notes) => runAction(confirming, notes)}/>
       )}
       {done && (
         <SuccessSheet title={done.title} body={done.body}
@@ -356,16 +365,51 @@ function ConfirmSheet({ verb, n, milestone, onCancel, onConfirm }) {
   const title = ms ? m.title : m.confirmTitle;
   const body = ms ? m.body : m.confirmBody;
   const value = ms && milestone ? milestone.value : n.value;
+
+  // Delivering a phase requires delivery notes (min 10 chars on the backend).
+  const isDeliver = verb === 'deliver-ms';
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const canConfirm = !isDeliver || notes.trim().length >= 10;
+
+  async function confirm() {
+    if (!canConfirm || submitting) return;
+    setSubmitting(true); setError(null);
+    try {
+      await onConfirm(notes.trim());
+    } catch (e) {
+      setSubmitting(false);
+      setError(e && e.status === 401 ? 'Sua sessão expirou. Entre novamente.' : ((e && e.message) || 'Não foi possível concluir. Tente de novo.'));
+    }
+  }
+
   return (
     <Overlay onClose={onCancel}>
       <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 500, letterSpacing: '-0.018em', margin: '0 0 10px', color: '#0A0A0A' }}>{title}</h2>
       <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, lineHeight: 1.5, color: '#52525B', margin: '0 0 18px' }}>{body}</p>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 12, marginBottom: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '14px 16px', background: '#FAFAFA', borderRadius: 12, marginBottom: isDeliver ? 16 : 22 }}>
         <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#71717A' }}>{ms && milestone ? milestone.title : 'Valor'}</span>
         <Money value={value} size={20}/>
       </div>
+      {isDeliver && (
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} maxLength={5000}
+          placeholder="O que foi entregue? (mín. 10 caracteres) — o cliente vê esta nota."
+          onFocus={e => e.target.style.borderColor = '#1E4BA0'} onBlur={e => e.target.style.borderColor = '#E4E4E7'}
+          style={{
+            width: '100%', boxSizing: 'border-box', padding: '13px 15px', border: '1.5px solid #E4E4E7',
+            borderRadius: 12, resize: 'vertical', outline: 'none', marginBottom: error ? 12 : 18,
+            fontFamily: "'Inter', sans-serif", fontSize: 14.5, lineHeight: 1.5, color: '#0A0A0A',
+          }}/>
+      )}
+      {error && (
+        <div role="alert" style={{
+          fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#B42318',
+          background: '#FEF3F2', border: '1px solid #FDA29B', borderRadius: 10, padding: '10px 12px', marginBottom: 16,
+        }}>{error}</div>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-        <PrimaryButton full onClick={onConfirm}>{title}</PrimaryButton>
+        <PrimaryButton full disabled={!canConfirm || submitting} onClick={confirm}>{submitting ? 'Enviando…' : title}</PrimaryButton>
         <GhostButton full onClick={onCancel}>Voltar</GhostButton>
       </div>
     </Overlay>

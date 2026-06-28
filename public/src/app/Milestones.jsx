@@ -13,7 +13,12 @@ function MilestoneDetail({ n, persona, onBack, onMilestone }) {
   const buyer = persona === 'comprador';
   const a = nextAction(persona, n.status, n);
 
-  const runPhase = (verb, i) => {
+  // Returns a promise; throws on API failure so the sheet can show the error.
+  const runPhase = async (verb, i, notes) => {
+    const milestone = ms[i];
+    if (verb === 'deliver-ms' && isUUID(n.id) && milestone && isUUID(milestone.id)) {
+      await DalivimAPI.post('/transactions/' + n.id + '/milestones/' + milestone.id + '/deliver', { delivery_notes: notes });
+    }
     onMilestone(n.id, i, verb === 'deliver-ms' ? 'entregue' : 'aprovado');
     setConfirming(null);
     setDone(verb === 'deliver-ms'
@@ -151,7 +156,7 @@ function MilestoneDetail({ n, persona, onBack, onMilestone }) {
 
       {confirming && (
         <ConfirmSheet verb={confirming.verb} n={n} milestone={ms[confirming.i]}
-          onCancel={() => setConfirming(null)} onConfirm={() => runPhase(confirming.verb, confirming.i)}/>
+          onCancel={() => setConfirming(null)} onConfirm={(notes) => runPhase(confirming.verb, confirming.i, notes)}/>
       )}
       {done && (
         <SuccessSheet title={done.title} body={done.body}
