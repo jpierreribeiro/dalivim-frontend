@@ -357,10 +357,13 @@ function FinalScreen({ value, tipo, acordo, onReset, onCta }) {
         ))}
       </ul>
 
-      {/* CTAs */}
+      {/* CTAs — carry the 30-sec test into onboarding so it isn't wasted. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <a
-          href="Onboarding.html?signup=1"
+          href={'Onboarding.html?signup=1'
+            + (tipo ? '&tipo=' + encodeURIComponent(tipo) : '')
+            + (value ? '&valor=' + encodeURIComponent(value) : '')
+            + (acordo ? '&acordo=' + encodeURIComponent(acordo) : '')}
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 16,

@@ -568,6 +568,54 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
     }
   }
 
+  // Google OAuth: ask the backend to start the flow and redirect to Google.
+  // Until GOOGLE_OAUTH_* is configured server-side, /auth/google/start 404s and
+  // we show a friendly "em breve" note instead of breaking.
+  async function googleStart() {
+    setError(null);
+    try {
+      const res = await DalivimAPI.post('/auth/google/start', {}, { auth: false });
+      if (res && res.auth_url) { window.location.href = res.auth_url; return; }
+      setGoogleNote(true);
+    } catch (e) {
+      setGoogleNote(true);
+    }
+  }
+
+  const googleBtn = (
+    <>
+      <button type="button" onClick={googleStart} style={{
+        width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 11,
+        fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#0A0A0A',
+        background: '#fff', border: '1.5px solid #E4E4E7', borderRadius: 9999,
+        padding: '14px 20px', cursor: 'pointer', marginBottom: 10, transition: 'border-color 160ms',
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = '#C7C7CE'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = '#E4E4E7'}
+      >
+        <span style={{
+          width: 20, height: 20, borderRadius: 5, background: '#fff', border: '1px solid #E4E4E7',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, color: '#1E4BA0',
+        }}>G</span>
+        Continuar com Google
+      </button>
+      {googleNote && (
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', margin: '0 0 10px' }}>
+          Login com Google em breve — use seu e-mail por enquanto.
+        </div>
+      )}
+    </>
+  );
+
+  const orDivider = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 14px' }}>
+      <span style={{ flex: 1, height: 1, background: '#ECECEF' }}/>
+      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA' }}>ou</span>
+      <span style={{ flex: 1, height: 1, background: '#ECECEF' }}/>
+    </div>
+  );
+
   return (
     <div style={{
       width: '100%', maxWidth: 420,
@@ -589,27 +637,7 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
 
       {view === 'choices' ? (
         <>
-          <button type="button" onClick={() => setGoogleNote(true)} style={{
-            width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 11,
-            fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#0A0A0A',
-            background: '#fff', border: '1.5px solid #E4E4E7', borderRadius: 9999,
-            padding: '14px 20px', cursor: 'pointer', marginBottom: 10, transition: 'border-color 160ms',
-          }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = '#C7C7CE'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = '#E4E4E7'}
-          >
-            <span style={{
-              width: 20, height: 20, borderRadius: 5, background: '#fff', border: '1px solid #E4E4E7',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, color: '#1E4BA0',
-            }}>G</span>
-            Continuar com Google
-          </button>
-          {googleNote && (
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: '#A1A1AA', margin: '0 0 10px' }}>
-              Login com Google em breve — use seu e-mail por enquanto.
-            </div>
-          )}
+          {googleBtn}
           <button type="button" onClick={() => { setView('email'); setError(null); }} style={{
             width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
             fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: '#fff',
@@ -622,6 +650,8 @@ function OBWelcome({ data, set, onStart, onAuthed, initialView, initialMode }) {
         </>
       ) : (
         <div style={{ textAlign: 'left' }}>
+          {googleBtn}
+          {orDivider}
           {mode === 'register' && (
             <OBAuthInput type="text" value={name} onChange={setName}
               placeholder="Nome completo" autoComplete="name" onEnter={submit}/>
@@ -763,6 +793,19 @@ function OnboardingApp() {
     txType: '', value: 1500, order: 'pagamento',
   });
   const set = (k, v) => setData(d => ({ ...d, [k]: v }));
+
+  // Carry the landing "teste agora, 30 seg" choices into the guided setup, so
+  // the first-negotiation step (4) arrives pre-filled. URL e.g.:
+  //   Onboarding.html?signup=1&tipo=servico&valor=1500&acordo=eu_pago
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const tipo = p.get('tipo'), valor = p.get('valor'), acordo = p.get('acordo');
+      if (tipo) set('txType', tipo);
+      if (valor && /^\d+$/.test(valor)) set('value', Math.max(0, parseInt(valor, 10)));
+      if (acordo) set('order', acordo === 'outro_entrega' ? 'entrega' : 'pagamento');
+    } catch (e) { /* no params — nothing to prefill */ }
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem(OB_LS, JSON.stringify({ stage, data })); } catch (e) {}
@@ -933,7 +976,7 @@ function OnboardingApp() {
           <img src="assets/dalivim-mark.svg" alt="" style={{ width: 24, height: 24 }}/>
           <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500, fontSize: 17, letterSpacing: '-0.01em' }}>Dalivim</span>
         </a>
-        <button type="button" onClick={() => { try { localStorage.removeItem(OB_LS); } catch (e) {} go('welcome'); }} style={{
+        <button type="button" onClick={() => { try { localStorage.removeItem(OB_LS); } catch (e) {} window.location.href = 'Landing.html'; }} style={{
           display: 'inline-flex', alignItems: 'center', gap: 7,
           fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: '#71717A',
           background: 'transparent', border: 'none', cursor: 'pointer',
